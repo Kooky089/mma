@@ -28,10 +28,10 @@ static int MMACommReset_private() {
   return 0;
 }
 
-int MMACommGet(char const *string, MMAComm *comm) {
+int MMACommGet(char const *commName, MMAComm *comm) {
   if (commArraySize) {
     // check if MMACommInitialize() has been called
-    int index = StringSetIndexOf(commNameList,string);
+    int index = StringSetIndexOf(commNameList,commName);
     if (index == -1) {
       // communicator name does not exist
       *comm = NULL;
@@ -44,7 +44,7 @@ int MMACommGet(char const *string, MMAComm *comm) {
   return 2;
 }
 
-int MMACommRegister(char const *string) {
+int MMACommRegister(char const *commName) {
   if (commArraySize) {
     // too late, MMAComms already initialized
     return 1;
@@ -52,7 +52,7 @@ int MMACommRegister(char const *string) {
   if (!commNameList) {
     StringSetCreate(&commNameList);
   }
-  return StringSetAdd(commNameList,string);
+  return StringSetAdd(commNameList,commName);
 }
 
 int MMACommPrint() {
@@ -195,15 +195,15 @@ int MMACommInitialize() {
   int         globalComponents;
   int         minRank;
   int         exeId;
-  int         flag;
+  int         alreadyInitializedMPI;
   
-  MPI_Initialized(&flag);
+  MPI_Initialized(&alreadyInitializedMPI);
   
   if (initialized) {
-    return !flag;
+    return !alreadyInitializedMPI;
   }
   
-  if (!flag) {
+  if (!alreadyInitializedMPI) {
     MPI_Init(NULL, NULL);
     initialized = 1;
   } else {
