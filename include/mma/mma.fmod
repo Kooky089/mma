@@ -1,0 +1,102 @@
+module mma
+   use iso_c_binding
+   implicit none
+   
+   type, bind(c) :: MMAComm
+      integer(c_int) :: rank
+      integer(c_int) :: size
+      integer(c_int) :: myRank0
+      integer(c_int) :: otherRank0
+      integer(c_int) :: subRank
+      integer(c_int) :: subSize
+      integer(c_int) :: comm
+      integer(c_int) :: subComm
+   end type
+      
+contains
+   
+   subroutine MMACommGet(string, comm, ierror)
+      implicit none
+      character(*) :: string
+      type(MMAComm), pointer :: comm
+      integer(c_int) :: ierror
+      
+      interface
+         subroutine MMACommGet_f(string, comm, ierror) bind(c)
+            use, intrinsic :: iso_c_binding
+            character(c_char), dimension(*) :: string
+            type(c_ptr) :: comm
+            integer(c_int) :: ierror
+         end subroutine
+      end interface
+      
+      type(c_ptr) :: comm_c
+      
+      call MMACommGet_f(string // C_NULL_CHAR, comm_c, ierror)
+      call c_f_pointer(comm_c, comm)
+   end subroutine
+   
+   
+   subroutine MMACommRegister(string, ierror)
+      implicit none
+      character(*) :: string
+      integer(c_int) :: ierror
+      
+      interface
+         subroutine MMACommRegister_f(string, ierror) bind(c)
+            use, intrinsic :: iso_c_binding
+            character(c_char), dimension(*) :: string
+            integer(c_int) :: ierror
+         end subroutine
+      end interface
+      
+      call MMACommRegister_f(string // C_NULL_CHAR, ierror)
+   end subroutine
+   
+   
+   subroutine MMACommPrint(ierror)
+      implicit none
+      integer(c_int) :: ierror
+      
+      interface
+         subroutine MMACommPrint_f(ierror) bind(c)
+            use, intrinsic :: iso_c_binding
+            integer(c_int) :: ierror
+         end subroutine
+      end interface
+      
+      call MMACommPrint_f(ierror)
+   end subroutine
+   
+   
+   subroutine MMACommFinalize(ierror)
+      implicit none
+      integer(c_int) :: ierror
+      
+      interface
+         subroutine MMACommFinalize_f(ierror) bind(c)
+            use, intrinsic :: iso_c_binding
+            integer(c_int) :: ierror
+         end subroutine
+      end interface
+      
+      call MMACommFinalize_f(ierror)
+   end subroutine
+   
+   
+   subroutine MMACommInitialize(ierror)
+      implicit none
+      integer(c_int) :: ierror
+      
+      interface
+         subroutine MMACommInitialize_f(ierror) bind(c)
+            use, intrinsic :: iso_c_binding
+            integer(c_int) :: ierror
+         end subroutine
+      end interface
+      
+      call MMACommInitialize_f(ierror)
+   end subroutine
+   
+end module
+
