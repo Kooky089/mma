@@ -9,8 +9,7 @@
 // mpiexec -n 3 ./test02 : -n 2 ./test02a : -n 2 ./test02b
 //
 // Corresponding call with test01
-// mpiexec -n 1 ./test01 a b  : -n 2 ./test01 a c  : -n 2 ./test01a b d : -n 2 ./test01b a d)
-// 
+// mpiexec -n 1 ./test01 a b  : -n 2 ./test01 a c  : -n 2 ./test01a b d : -n 2 ./test01b a d
 */
 
 int main(int argc, char* argv[]) {
