@@ -49,7 +49,7 @@ if (MSVC)
     target_link_libraries(mma PUBLIC ${MPI_LIB})
 endif()
 
-add_subdirectory(apps)
+add_subdirectory(examples)
 
 enable_testing()
 add_subdirectory(tests)

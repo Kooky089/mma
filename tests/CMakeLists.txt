@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 2.8)
 project(mma-test)
 
 
-
-
 add_executable(test01 test01.c)
 target_link_libraries(test01 PRIVATE mma)
 
