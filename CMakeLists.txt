@@ -42,7 +42,7 @@ endif(MSVC)
 message(STATUS "USE_Fortran: " ${USE_Fortran})
 message(STATUS "USE_C : " ${USE_C})
 
-add_library(mma SHARED src/mma.c src/StringSet.c)
+add_library(mma SHARED src/mma.c src/StringSet.c include/mma/mma.h include/mma/mma.fmod)
 target_include_directories(mma PUBLIC include)
 if (MSVC)
     target_include_directories(mma PUBLIC ${MPI_INCLUDE})
