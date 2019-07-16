@@ -2,11 +2,10 @@ language: cpp
 install:
   - sudo apt-get install libcr-dev mpich2 mpich2-doc
 script:
-  - mpicc hello.c
-  - ./a.out
-  - mpirun -np 4 ./a.out
-
-
+  - mkdir _build
+  - cd _build
+  - cmake ../
+  - make
 
 
 #dist: trusty
