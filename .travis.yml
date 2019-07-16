@@ -1,0 +1,10 @@
+language: c
+install:
+  - sudo apt-get install libcr-dev mpich2 mpich2-doc
+script:
+  - mkdir _build
+  - cd _build
+  - CC=mpicc FC=mpif90 cmake ../
+  - make
+  - make test
+
