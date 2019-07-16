@@ -4,7 +4,7 @@ install:
 script:
   - mkdir _build
   - cd _build
-  - CC=mpicc cmake ../
+  - CC=mpicc FC=mpifc cmake ../
   - make
   - make test
 
