@@ -1,0 +1,33 @@
+language: cpp
+install:
+  - sudo apt-get install libcr-dev mpich2 mpich2-doc
+script:
+  - mpicc hello.c
+  - ./a.out
+  - mpirun -np 4 ./a.out
+
+
+
+
+#dist: trusty
+#sudo: required
+#install:
+#  sudo apt-get install libcr-dev mpich2 mpich2-doc
+#language:
+#  - cc
+#compiler:
+#  - gcc
+#addons:
+#  apt:
+#    sources:
+#      - ubuntu-toolchain-r-test
+#    packages:
+#      - gcc-6
+#      - cmake
+#script:
+#  - ln -s /usr/bin/gcc-6 /usr/local/bin/gcc
+  # Export CC and CXX to tell cmake which compiler to use
+#  - export CC=/usr/bin/gcc-6
+  # Check versions of gcc, g++ and cmake
+#  - gcc -v && g++ -v && cmake --version
+  # Run your build commands next
