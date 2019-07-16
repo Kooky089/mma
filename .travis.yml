@@ -1,4 +1,4 @@
-language: cpp
+language: c
 install:
   - sudo apt-get install libcr-dev mpich2 mpich2-doc
 script:
@@ -6,6 +6,7 @@ script:
   - cd _build
   - CC=mpicc cmake ../
   - make
+  - make test
 
 
 #dist: trusty
