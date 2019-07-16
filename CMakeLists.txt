@@ -6,10 +6,10 @@ enable_language (Fortran OPTIONAL)
 
 # Don't use FindMPI when using MS Visual Studio
 if (MSVC)
-    if (NOT EXISTS $ENV{I_MPI_ROOT}) 
+    if (NOT EXISTS $ENV{I_MPI_ROOT})
         message(FATAL_ERROR "Environment variable I_MPI_ROOT=$ENV{I_MPI_ROOT} is not set or invalid. You need to use IntelMPI when using MS Visual Studio.")
     endif()
-    
+
     set (MPI_INCLUDE "$ENV{I_MPI_ROOT}\\intel64\\include")
     set (MPI_LIB "$ENV{I_MPI_ROOT}\\intel64\\lib\\release\\impi.lib")
     set (MPIEXEC "$ENV{I_MPI_ROOT}\\intel64\\bin\\mpiexec.exe")

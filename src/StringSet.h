@@ -3,14 +3,14 @@
 
 typedef struct _StringElement StringElement;
 struct _StringElement {
-  StringElement   *next;
-  char            *value;
+    StringElement       *next;
+    char                *value;
 };
 
 typedef struct _StringSet StringSet;
 struct _StringSet {
-  StringElement   *first;
-  int             size;
+    StringElement       *first;
+    int                 size;
 };
 
 void    StringSetCreate(StringSet **);
