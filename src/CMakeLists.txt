@@ -1,0 +1,6 @@
+add_library(mma SHARED mma.c StringSet.c ../include/mma/mma.h ../include/mma/mma.fmod)
+target_include_directories(mma PUBLIC ../include)
+if (MSVC)
+    target_include_directories(mma PUBLIC ${MPI_INCLUDE})
+    target_link_libraries(mma PUBLIC ${MPI_LIB})
+endif()
