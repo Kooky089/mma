@@ -6,7 +6,7 @@
 /* alway use asserts for this test */
 #if defined(NDEBUG)
 #undef NDEBUG
-#end if
+#endif
 #include <assert.h>
 
 
