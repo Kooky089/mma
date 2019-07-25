@@ -12,7 +12,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif // __cplusplus
+#endif
 
 typedef struct _p_MMAComm* MMAComm;
 struct _p_MMAComm {
@@ -45,7 +45,7 @@ DllExport void mmacomminitialize_f(int *ierror);
 
 #ifdef __cplusplus
 }
-#endif // __cplusplus
+#endif
 
 
-#endif // __MMA_H
+#endif
