@@ -30,10 +30,10 @@ static int MMACommReset_private() {
 
 int MMACommGet(char const *commName, MMAComm *comm) {
     if (commArraySize) {
-        // check if MMACommInitialize() has been called
+        /* check if MMACommInitialize() has been called */
         int index = StringSetIndexOf(commNameList,commName);
         if (index == -1) {
-            // communicator name does not exist
+            /* communicator name does not exist */
             *comm = NULL;
             return 1;
         }
@@ -46,7 +46,7 @@ int MMACommGet(char const *commName, MMAComm *comm) {
 
 int MMACommRegister(char const *commName) {
     if (commArraySize) {
-        // too late, MMAComms already initialized
+        /* too late, MMAComms already initialized */
         return 1;
     }
     if (!commNameList) {
