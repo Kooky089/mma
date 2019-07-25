@@ -10,7 +10,7 @@
 #endif
 
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -43,7 +43,7 @@ DllExport void mmacommfinalize_f(int *ierror);
 DllExport void mmacomminitialize_f(int *ierror);
 
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }
 #endif
 
