@@ -29,28 +29,30 @@ int StringSetAdd(StringSet *list, const char *string) {
     StringElement *current;
     int i;
 
-    for (i=0; i<list->size; i++) {
-        if (!i) {
-                current = list->first;
-        } else {
-        current = current->next;
-        }
-        if (!strcmp(current->value,string)) {
-            return 1;
-        }
-    }
-
     new = malloc(sizeof(StringElement));
     new->value = malloc(sizeof(char)*(strlen(string)+1));
     memcpy(new->value,string,sizeof(char)*(strlen(string)+1));
     new->next = NULL;
 
-    if (!list->size) {
-        list->first = new;
-        list->size = 1;
-    } else {
+    if (list->size > 0) {
+        /* add after last element */
+        for (i=0; i < list->size; i++) {
+            if (!i) {
+                current = list->first;
+            } else {
+                current = current->next;
+            }
+            /* string already exists in set */
+            if (!strcmp(current->value,string)) {
+                return 1;
+            }
+        }
         current->next = new;
         list->size++;
+    } else {
+        /* add first element */
+        list->first = new;
+        list->size = 1;
     }
     return 0;
 }
