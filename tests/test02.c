@@ -2,6 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+/* alway use asserts for this test */
+#if defined(NDEBUG)
+#undef NDEBUG
 #include <assert.h>
 
 
