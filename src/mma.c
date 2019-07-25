@@ -273,9 +273,9 @@ int MMACommInitialize() {
         if (!worldRank) {
             string = StringSetGet(globalCommNameList,i);
             msgSize = (int)strlen(string)+1;
-        }
-        MPI_Bcast(&msgSize,1,MPI_INTEGER,0,MPI_COMM_WORLD);
-        if (worldRank) {
+            MPI_Bcast(&msgSize,1,MPI_INTEGER,0,MPI_COMM_WORLD);
+        } else {
+            MPI_Bcast(&msgSize,1,MPI_INTEGER,0,MPI_COMM_WORLD);
             string = malloc(sizeof(char)*msgSize);
             if (string == NULL) {
                 return 5;
