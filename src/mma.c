@@ -92,7 +92,7 @@ int mma_finalize() {
         StringListDestroy(&comm_name_list);
     }
     if (comm_array_size) {
-        for (i=0; i < comm_array_size; ++i) {
+        for (i = 0; i < comm_array_size; ++i) {
             free(comm_array[i]->name);
             free(comm_array[i]);
         }

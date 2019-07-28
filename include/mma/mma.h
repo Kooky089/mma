@@ -1,12 +1,12 @@
-#if !defined(MMA_MMA_H_)
-#define MMA_MMA_H_
+#if !defined(_MMA_MMA_H)
+#define _MMA_MMA_H
 
 #include <mpi.h>
 
 #if defined(_WIN32)
-#define DLLEXPOT   __declspec( dllexport )
+#define DLLEXPORT   __declspec( dllexport )
 #else
-#define DLLEXPOT
+#define DLLEXPORT
 #endif
 
 
@@ -28,19 +28,19 @@ struct mma_comm {
     MPI_Comm  subComm;
 };
 
-DLLEXPOT int mma_initialize();
-DLLEXPOT int mma_finalize();
-DLLEXPOT int mma_print();
-DLLEXPOT int mma_comm_register(const char *comm_name);
-DLLEXPOT int mma_comm_get(const char *comm_name, struct mma_comm **comm);
+DLLEXPORT int mma_initialize();
+DLLEXPORT int mma_finalize();
+DLLEXPORT int mma_print();
+DLLEXPORT int mma_comm_register(const char *comm_name);
+DLLEXPORT int mma_comm_get(const char *comm_name, struct mma_comm **comm);
 
 
 /* Fortran wrapper */
-DLLEXPOT void mma_initialize_f(int *ierror);
-DLLEXPOT void mma_finalize_f(int *ierror);
-DLLEXPOT void mma_print_f(int *ierror);
-DLLEXPOT void mma_comm_register_f(char *comm_name, int *ierror);
-DLLEXPOT void mma_comm_get_f(char *comm_name, struct mma_comm **comm, int *ierror);
+DLLEXPORT void mma_initialize_f(int *ierror);
+DLLEXPORT void mma_finalize_f(int *ierror);
+DLLEXPORT void mma_print_f(int *ierror);
+DLLEXPORT void mma_comm_register_f(char *comm_name, int *ierror);
+DLLEXPORT void mma_comm_get_f(char *comm_name, struct mma_comm **comm, int *ierror);
 
 
 
@@ -48,6 +48,5 @@ DLLEXPOT void mma_comm_get_f(char *comm_name, struct mma_comm **comm, int *ierro
 #if defined(__cplusplus)
 }
 #endif
-
 
 #endif
