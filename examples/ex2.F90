@@ -5,7 +5,7 @@ program main
    use mpi
    implicit none
    integer :: ierr
-   type(MMAComm), pointer :: comm
+   type(mma_comm), pointer :: comm
    integer :: index
    integer :: myrank
    integer :: ierror
