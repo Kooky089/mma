@@ -9,15 +9,15 @@ program main
    integer :: index
    integer :: myrank
    integer :: ierror
-   call mmacommregister("test", ierror)
-   call mmacommprint(ierror)
-   call mmacomminitialize(ierror)
-   call mmacommget("test", comm, ierror)
+   call mma_comm_register("test", ierror)
+   call mma_print(ierror)
+   call mma_initialize(ierror)
+   call mm_comm_get("test", comm, ierror)
    call MPI_COMM_RANK(comm%comm, myrank, ierror)
    write(*,*) comm%rank, myrank
-   call mmacommprint(ierror)
-      call mmacommregister("test", ierror)
+   call mma_print(ierror)
+      call mma_comm_register("test", ierror)
       write(*,*) ierror
-   call mmacommfinalize(ierror)
+   call mma_finalize(ierror)
 end program
 

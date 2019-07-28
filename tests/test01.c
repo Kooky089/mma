@@ -7,11 +7,11 @@
 int main(int argc, char* argv[]) {
     int i;
     for (i=1; i<argc; i++) {
-        MMACommRegister(argv[i]);
+        mma_comm_register(argv[i]);
     }
-    MMACommInitialize();
-    MMACommPrint();
-    MMACommFinalize();
+    mma_initialize();
+    mma_print();
+    mma_finalize();
     return 0;
 }
 

@@ -14,8 +14,7 @@
 extern "C" {
 #endif
 
-typedef struct _p_MMAComm* MMAComm;
-struct _p_MMAComm {
+struct mma_comm {
     int       rank;
     int       size;
     int       myRank0;
@@ -24,23 +23,26 @@ struct _p_MMAComm {
     int       subSize;
     int       comm_f;
     int       subComm_f;
-    char*     name;
+    char      *name;
     MPI_Comm  comm;
     MPI_Comm  subComm;
 };
 
-DLLEXPOT int MMACommGet(const char* comm_name, MMAComm* comm);
-DLLEXPOT int MMACommRegister(const char* comm_name);
-DLLEXPOT int MMACommPrint();
-DLLEXPOT int MMACommFinalize();
-DLLEXPOT int MMACommInitialize();
+DLLEXPOT int mma_initialize();
+DLLEXPOT int mma_finalize();
+DLLEXPOT int mma_print();
+DLLEXPOT int mma_comm_register(const char *comm_name);
+DLLEXPOT int mma_comm_get(const char *comm_name, struct mma_comm **comm);
+
 
 /* Fortran wrapper */
-DLLEXPOT void mmacommget_f(char* comm_name, MMAComm* comm, int* ierror);
-DLLEXPOT void mmacommregister_f(char* comm_name, int* ierror);
-DLLEXPOT void mmacommprint_f(int* ierror);
-DLLEXPOT void mmacommfinalize_f(int* ierror);
-DLLEXPOT void mmacomminitialize_f(int* ierror);
+DLLEXPOT void mma_initialize_f(int *ierror);
+DLLEXPOT void mma_finalize_f(int *ierror);
+DLLEXPOT void mma_print_f(int *ierror);
+DLLEXPOT void mma_comm_register_f(char *comm_name, int *ierror);
+DLLEXPOT void mma_comm_get_f(char *comm_name, struct mma_comm **comm, int *ierror);
+
+
 
 
 #if defined(__cplusplus)

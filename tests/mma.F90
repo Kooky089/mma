@@ -4,14 +4,14 @@ program main
    use mma
    implicit none
    integer :: ierr
-   type(MMAComm), pointer :: comm
+   type(mma_comm), pointer :: comm
    integer :: ierror
-   call mmacommregister("test", ierror)
-   call mmacommprint(ierror)
-   call mmacomminitialize(ierror)
-   call mmacommget("test", comm, ierror)
-   call mmacommprint(ierror)
-   call mmacommregister("test", ierror)
-   call mmacommfinalize(ierror)
+   call mma_comm_register("test", ierror)
+   call mma_print(ierror)
+   call mma_initialize(ierror)
+   call mma_comm_get("test", comm, ierror)
+   call mma_print(ierror)
+   call mma_comm_register("test", ierror)
+   call mma_finalize(ierror)
 end program
 

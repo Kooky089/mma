@@ -11,17 +11,17 @@
 #else
 #endif
 
-static int          world_rank = MPI_PROC_NULL;
-static int          world_size = 0;
-static StringList*  comm_name_list = NULL;
-static MMAComm*     comm_array = NULL;
-static int          comm_array_size = 0;
-static int          initialized = 0;
+static int                  world_rank = MPI_PROC_NULL;
+static int                  world_size = 0;
+static StringList           *comm_name_list = NULL;
+static struct mma_comm      **comm_array = NULL;
+static int                  comm_array_size = 0;
+static int                  initialized = 0;
 
-static int MMACommGetExeId_private(int* exe_id);
-static int MMACommGetExeName_private(char** name);
+static int __mma_get_exe_id(int *exe_id);
+static int __mma_get_exe_name(char **name);
 
-static int MMACommReset_private() {
+static int __mma_reset() {
     world_rank = MPI_PROC_NULL;
     world_size = 0;
     comm_name_list = NULL;
@@ -31,9 +31,9 @@ static int MMACommReset_private() {
     return 0;
 }
 
-int MMACommGet(const char* comm_name, MMAComm* comm) {
+int mma_comm_get(const char *comm_name, struct mma_comm **comm) {
     if (comm_array_size) {
-        /* check if MMACommInitialize() has been called */
+        /* check if mma_initialize() has been called */
         int index = StringListIndexOf(comm_name_list, comm_name);
         if (index == -1) {
             /* communicator name does not exist */
@@ -47,7 +47,7 @@ int MMACommGet(const char* comm_name, MMAComm* comm) {
     return 2;
 }
 
-int MMACommRegister(const char* comm_name) {
+int mma_comm_register(const char *comm_name) {
     if (comm_array_size) {
         /* too late, MMAComms already initialized */
         return 1;
@@ -58,10 +58,10 @@ int MMACommRegister(const char* comm_name) {
     return StringListAdd(comm_name_list, comm_name);
 }
 
-int MMACommPrint() {
+int mma_print() {
     int i;
     if (comm_array_size) {
-        for (i=0; i < comm_array_size; i++) {
+        for (i=0; i < comm_array_size; ++i) {
             printf("rank: %d, size: %d, myRank0: %d, otherRank0: %d, subRank: %d, subSize: %d, name: %s\n",
             comm_array[i]->rank,
             comm_array[i]->size,
@@ -83,7 +83,7 @@ int MMACommPrint() {
 
 
 
-int MMACommFinalize() {
+int mma_finalize() {
     int i;
     if (initialized == 1) {
         MPI_Finalize();
@@ -98,11 +98,11 @@ int MMACommFinalize() {
         }
         free(comm_array);
     }
-    MMACommReset_private();
+    __mma_reset();
     return 0;
 }
 
-static int MMACommGetExeId_private(int* exe_id) {
+static int __mma_get_exe_id(int* exe_id) {
     StringList* exe_name_list;
     MPI_Status status;
     int i;
@@ -112,7 +112,7 @@ static int MMACommGetExeId_private(int* exe_id) {
     char* exe_name;
 
     /* Get exe ID */
-    MMACommGetExeName_private(&exe_name);
+    __mma_get_exe_name(&exe_name);
 
     if (!world_rank) {
         StringListCreate(&exe_name_list);
@@ -170,7 +170,7 @@ static int MMACommGetExeId_private(int* exe_id) {
     return 0;
 }
 
-static int MMACommGetExeName_private(char** name) {
+static int __mma_get_exe_name(char** name) {
 #if defined(_WIN32)
     char __progname[MAX_PATH];
     GetModuleFileName(NULL, __progname, MAX_PATH);
@@ -185,7 +185,7 @@ static int MMACommGetExeName_private(char** name) {
     return 0;
 }
 
-int MMACommInitialize() {
+int mma_initialize() {
     StringList*     global_comm_name_list;
     int             comm_size = 0;
     int             global_comm_size;
@@ -215,14 +215,14 @@ int MMACommInitialize() {
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-    MMACommRegister("world");
+    mma_comm_register("world");
 
-    MMACommGetExeId_private(&exe_id);
+    __mma_get_exe_id(&exe_id);
 
     /* number of local registered comms */
     comm_size = StringListSize(comm_name_list);
     comm_array_size = comm_size;
-    comm_array = calloc(comm_array_size, sizeof(MMAComm));
+    comm_array = calloc(comm_array_size, sizeof(struct mma_comm *));
     if (comm_array == NULL) {
         return 2;
     }
@@ -354,18 +354,18 @@ int MMACommInitialize() {
 
 
 /* Fortran wrapper */
-void mmacommget_f(char* string, MMAComm* comm, int* ierror) {
-    *ierror = MMACommGet(string, comm);
+void mma_comm_get_f(char *string, struct mma_comm **comm, int *ierror) {
+    *ierror = mma_comm_get(string, comm);
 }
-void mmacommregister_f(char* string, int* ierror) {
-    *ierror = MMACommRegister(string);
+void mma_comm_register_f(char *string, int *ierror) {
+    *ierror = mma_comm_register(string);
 }
-void mmacommprint_f(int* ierror) {
-    *ierror = MMACommPrint();
+void mma_print_f(int *ierror) {
+    *ierror = mma_print();
 }
-void mmacommfinalize_f(int* ierror) {
-    *ierror = MMACommFinalize();
+void mma_initialize_f(int *ierror) {
+    *ierror = mma_initialize();
 }
-void mmacomminitialize_f(int* ierror) {
-    *ierror = MMACommInitialize();
+void mma_finalize_f(int *ierror) {
+    *ierror = mma_finalize();
 }

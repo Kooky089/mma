@@ -19,52 +19,52 @@
 
 int main(int argc, char* argv[]) {
 
-    int worldRank;
-    int worldSize;
+    int world_rank;
+    int world_size;
 
     int error;
 
     MPI_Init(NULL, NULL);
 
-    MPI_Comm_rank(MPI_COMM_WORLD,&worldRank);
-    MPI_Comm_size(MPI_COMM_WORLD,&worldSize);
+    MPI_Comm_rank(MPI_COMM_WORLD,&world_rank);
+    MPI_Comm_size(MPI_COMM_WORLD,&world_size);
 
-    if (worldRank == 0) {
-        error = MMACommRegister("a"); assert(error == 0);
-        error = MMACommRegister("b"); assert(error == 0);
-        error = MMACommRegister("a"); assert(error != 0);
+    if (world_rank == 0) {
+        error = mma_comm_register("a"); assert(error == 0);
+        error = mma_comm_register("b"); assert(error == 0);
+        error = mma_comm_register("a"); assert(error != 0);
     }
-    if (worldRank == 1 || worldRank == 2) {
-        error = MMACommRegister("a"); assert(error == 0);
-        error = MMACommRegister("c"); assert(error == 0);
+    if (world_rank == 1 || world_rank == 2) {
+        error = mma_comm_register("a"); assert(error == 0);
+        error = mma_comm_register("c"); assert(error == 0);
     }
-    if (worldRank == 3 || worldRank == 4) {
-        error = MMACommRegister("b"); assert(error == 0);
-        error = MMACommRegister("d"); assert(error == 0);
+    if (world_rank == 3 || world_rank == 4) {
+        error = mma_comm_register("b"); assert(error == 0);
+        error = mma_comm_register("d"); assert(error == 0);
     }
-    if (worldRank == 5 || worldRank == 6) {
-        error = MMACommRegister("a"); assert(error == 0);
-        error = MMACommRegister("d"); assert(error == 0);
+    if (world_rank == 5 || world_rank == 6) {
+        error = mma_comm_register("a"); assert(error == 0);
+        error = mma_comm_register("d"); assert(error == 0);
     }
 
 
-    MMAComm testErrorComm;
+    struct mma_comm *testErrorComm;
     // ask for comm before initialized
-    error = MMACommGet("a",&testErrorComm); assert(error != 0);
+    error = mma_comm_get("a",&testErrorComm); assert(error != 0);
     // ask for comm that doesnt exist
-    error = MMACommGet("ab",&testErrorComm); assert(error != 0);
+    error = mma_comm_get("ab",&testErrorComm); assert(error != 0);
 
-    error = MMACommInitialize(); assert(error == 0);
-    MMAComm world;
-    error = MMACommGet("world", &world); assert(error == 0);
+    error = mma_initialize(); assert(error == 0);
+    struct mma_comm *world;
+    error = mma_comm_get("world", &world); assert(error == 0);
 
-    assert(world->rank == worldRank);
-    assert(world->size == worldSize);
+    assert(world->rank == world_rank);
+    assert(world->size == world_size);
     assert(world->otherRank0 == MPI_PROC_NULL);
 
-    if (worldRank == 0) {
-        MMAComm a;
-        error = MMACommGet("a",&a); assert(error == 0);
+    if (world_rank == 0) {
+        struct mma_comm *a;
+        error = mma_comm_get("a",&a); assert(error == 0);
         assert(a->rank == 0);
         assert(a->size == 5);
         assert(a->subRank == 0);
@@ -72,8 +72,8 @@ int main(int argc, char* argv[]) {
         assert(a->myRank0 == 0);
         assert(a->otherRank0 == 3);
         assert(!strcmp(a->name,"a"));
-        MMAComm b;
-        error = MMACommGet("b",&b); assert(error == 0);
+        struct mma_comm *b;
+        error = mma_comm_get("b",&b); assert(error == 0);
         assert(b->rank == 0);
         assert(b->size == 3);
         assert(b->subRank == 0);
@@ -82,9 +82,9 @@ int main(int argc, char* argv[]) {
         assert(b->otherRank0 == 1);
         assert(!strcmp(b->name,"b"));
     }
-    if (worldRank == 1) {
-        MMAComm a;
-        error = MMACommGet("a",&a); assert(error == 0);
+    if (world_rank == 1) {
+        struct mma_comm *a;
+        error = mma_comm_get("a",&a); assert(error == 0);
         assert(a->rank == 1);
         assert(a->size == 5);
         assert(a->subRank == 1);
@@ -92,8 +92,8 @@ int main(int argc, char* argv[]) {
         assert(a->myRank0 == 0);
         assert(a->otherRank0 == 3);
         assert(!strcmp(a->name,"a"));
-        MMAComm c;
-        error = MMACommGet("c",&c); assert(error == 0);
+        struct mma_comm *c;
+        error = mma_comm_get("c",&c); assert(error == 0);
         assert(c->rank == 0);
         assert(c->size == 2);
         assert(c->subRank == 0);
@@ -102,9 +102,9 @@ int main(int argc, char* argv[]) {
         assert(c->otherRank0 == MPI_PROC_NULL);
         assert(!strcmp(c->name,"c"));
     }
-    if (worldRank == 2) {
-        MMAComm a;
-        error = MMACommGet("a",&a); assert(error == 0);
+    if (world_rank == 2) {
+        struct mma_comm *a;
+        error = mma_comm_get("a",&a); assert(error == 0);
         assert(a->rank == 2);
         assert(a->size == 5);
         assert(a->subRank == 2);
@@ -112,8 +112,8 @@ int main(int argc, char* argv[]) {
         assert(a->myRank0 == 0);
         assert(a->otherRank0 == 3);
         assert(!strcmp(a->name,"a"));
-        MMAComm c;
-        error = MMACommGet("c",&c); assert(error == 0);
+        struct mma_comm *c;
+        error = mma_comm_get("c",&c); assert(error == 0);
         assert(c->rank == 1);
         assert(c->size == 2);
         assert(c->subRank == 1);
@@ -122,9 +122,9 @@ int main(int argc, char* argv[]) {
         assert(c->otherRank0 == MPI_PROC_NULL);
         assert(!strcmp(c->name,"c"));
     }
-    if (worldRank == 3) {
-        MMAComm b;
-        error = MMACommGet("b",&b); assert(error == 0);
+    if (world_rank == 3) {
+        struct mma_comm *b;
+        error = mma_comm_get("b",&b); assert(error == 0);
         assert(b->rank == 1);
         assert(b->size == 3);
         assert(b->subRank == 0);
@@ -132,8 +132,8 @@ int main(int argc, char* argv[]) {
         assert(b->myRank0 == 1);
         assert(b->otherRank0 == 0);
         assert(!strcmp(b->name,"b"));
-        MMAComm d;
-        error = MMACommGet("d",&d); assert(error == 0);
+        struct mma_comm *d;
+        error = mma_comm_get("d",&d); assert(error == 0);
         assert(d->rank == 0);
         assert(d->size == 4);
         assert(d->subRank == 0);
@@ -142,9 +142,9 @@ int main(int argc, char* argv[]) {
         assert(d->otherRank0 == 2);
         assert(!strcmp(d->name,"d"));
     }
-    if (worldRank == 4) {
-        MMAComm b;
-        error = MMACommGet("b",&b); assert(error == 0);
+    if (world_rank == 4) {
+        struct mma_comm *b;
+        error = mma_comm_get("b",&b); assert(error == 0);
         assert(b->rank == 2);
         assert(b->size == 3);
         assert(b->subRank == 1);
@@ -152,8 +152,8 @@ int main(int argc, char* argv[]) {
         assert(b->myRank0 == 1);
         assert(b->otherRank0 == 0);
         assert(!strcmp(b->name,"b"));
-        MMAComm d;
-        error = MMACommGet("d",&d); assert(error == 0);
+        struct mma_comm *d;
+        error = mma_comm_get("d",&d); assert(error == 0);
         assert(d->rank == 1);
         assert(d->size == 4);
         assert(d->subRank == 1);
@@ -162,9 +162,9 @@ int main(int argc, char* argv[]) {
         assert(d->otherRank0 == 2);
         assert(!strcmp(d->name,"d"));
     }
-    if (worldRank == 5) {
-        MMAComm a;
-        error = MMACommGet("a",&a); assert(error == 0);
+    if (world_rank == 5) {
+        struct mma_comm *a;
+        error = mma_comm_get("a",&a); assert(error == 0);
         assert(a->rank == 3);
         assert(a->size == 5);
         assert(a->subRank == 0);
@@ -172,8 +172,8 @@ int main(int argc, char* argv[]) {
         assert(a->myRank0 == 3);
         assert(a->otherRank0 == 0);
         assert(!strcmp(a->name,"a"));
-        MMAComm d;
-        error = MMACommGet("d",&d); assert(error == 0);
+        struct mma_comm *d;
+        error = mma_comm_get("d",&d); assert(error == 0);
         assert(d->rank == 2);
         assert(d->size == 4);
         assert(d->subRank == 0);
@@ -182,9 +182,9 @@ int main(int argc, char* argv[]) {
         assert(d->otherRank0 == 0);
         assert(!strcmp(d->name,"d"));
     }
-    if (worldRank == 6) {
-        MMAComm a;
-        error = MMACommGet("a",&a); assert(error == 0);
+    if (world_rank == 6) {
+        struct mma_comm *a;
+        error = mma_comm_get("a",&a); assert(error == 0);
         assert(a->rank == 4);
         assert(a->size == 5);
         assert(a->subRank == 1);
@@ -192,8 +192,8 @@ int main(int argc, char* argv[]) {
         assert(a->myRank0 == 3);
         assert(a->otherRank0 == 0);
         assert(!strcmp(a->name,"a"));
-        MMAComm d;
-        error = MMACommGet("d",&d); assert(error == 0);
+        struct mma_comm *d;
+        error = mma_comm_get("d",&d); assert(error == 0);
         assert(d->rank == 3);
         assert(d->size == 4);
         assert(d->subRank == 1);
@@ -202,7 +202,7 @@ int main(int argc, char* argv[]) {
         assert(d->otherRank0 == 0);
         assert(!strcmp(d->name,"d"));
     }
-    error = MMACommPrint(); assert(error == 0);
-    error = MMACommFinalize(); assert(error == 0);
+    error = mma_print(); assert(error == 0);
+    error = mma_finalize(); assert(error == 0);
     return 0;
 }
