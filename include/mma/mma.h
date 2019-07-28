@@ -1,12 +1,12 @@
-#if !defined(__MMA_H)
-#define __MMA_H
+#if !defined(MMA_MMA_H_)
+#define MMA_MMA_H_
 
-#include<mpi.h>
+#include <mpi.h>
 
 #if defined(_WIN32)
-#define DllExport   __declspec( dllexport )
+#define DLLEXPOT   __declspec( dllexport )
 #else
-#define DllExport
+#define DLLEXPOT
 #endif
 
 
@@ -24,23 +24,23 @@ struct _p_MMAComm {
     int       subSize;
     int       comm_f;
     int       subComm_f;
-    char     *name;
+    char*     name;
     MPI_Comm  comm;
     MPI_Comm  subComm;
 };
 
-DllExport int MMACommGet(char const *, MMAComm *);
-DllExport int MMACommRegister(char const *);
-DllExport int MMACommPrint();
-DllExport int MMACommFinalize();
-DllExport int MMACommInitialize();
+DLLEXPOT int MMACommGet(const char* comm_name, MMAComm* comm);
+DLLEXPOT int MMACommRegister(const char* comm_name);
+DLLEXPOT int MMACommPrint();
+DLLEXPOT int MMACommFinalize();
+DLLEXPOT int MMACommInitialize();
 
 /* Fortran wrapper */
-DllExport void mmacommget_f(char *string, MMAComm *comm, int *ierror);
-DllExport void mmacommregister_f(char *string, int *ierror);
-DllExport void mmacommprint_f(int *ierror);
-DllExport void mmacommfinalize_f(int *ierror);
-DllExport void mmacomminitialize_f(int *ierror);
+DLLEXPOT void mmacommget_f(char* comm_name, MMAComm* comm, int* ierror);
+DLLEXPOT void mmacommregister_f(char* comm_name, int* ierror);
+DLLEXPOT void mmacommprint_f(int* ierror);
+DLLEXPOT void mmacommfinalize_f(int* ierror);
+DLLEXPOT void mmacomminitialize_f(int* ierror);
 
 
 #if defined(__cplusplus)
