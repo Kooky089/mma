@@ -3,7 +3,6 @@
 program main
    use mma
    implicit none
-   integer :: ierr
    type(mma_comm), pointer :: comm
    integer :: ierror
    call mma_comm_register("test", ierror)
