@@ -13,15 +13,15 @@
 
 static int                  world_rank = MPI_PROC_NULL;
 static int                  world_size = 0;
-static StringList           *comm_name_list = NULL;
+static struct string_list   *comm_name_list = NULL;
 static struct mma_comm      **comm_array = NULL;
 static int                  comm_array_size = 0;
 static int                  initialized = 0;
 
-static int __mma_get_exe_id(int *exe_id);
-static int __mma_get_exe_name(char **name);
+static int mma_get_exe_id_(int *exe_id);
+static int mma_get_exe_name_(char **name);
 
-static int __mma_reset() {
+static int mma_reset_() {
     world_rank = MPI_PROC_NULL;
     world_size = 0;
     comm_name_list = NULL;
@@ -34,7 +34,7 @@ static int __mma_reset() {
 int mma_comm_get(const char *comm_name, struct mma_comm **comm) {
     if (comm_array_size) {
         /* check if mma_initialize() has been called */
-        int index = StringListIndexOf(comm_name_list, comm_name);
+        int index = string_list_index_of(comm_name_list, comm_name);
         if (index == -1) {
             /* communicator name does not exist */
             *comm = NULL;
@@ -53,27 +53,27 @@ int mma_comm_register(const char *comm_name) {
         return 1;
     }
     if (!comm_name_list) {
-        StringListCreate(&comm_name_list);
+        string_list_create(&comm_name_list);
     }
-    return StringListAdd(comm_name_list, comm_name);
+    return string_list_add(comm_name_list, comm_name);
 }
 
 int mma_print() {
     int i;
     if (comm_array_size) {
-        for (i=0; i < comm_array_size; ++i) {
+        for (i = 0; i < comm_array_size; ++i) {
             printf("rank: %d, size: %d, myRank0: %d, otherRank0: %d, subRank: %d, subSize: %d, name: %s\n",
             comm_array[i]->rank,
             comm_array[i]->size,
-            comm_array[i]->myRank0,
-            comm_array[i]->otherRank0,
-            comm_array[i]->subRank,
-            comm_array[i]->subSize,
+            comm_array[i]->my_rank0,
+            comm_array[i]->other_rank0,
+            comm_array[i]->sub_rank,
+            comm_array[i]->sub_size,
             comm_array[i]->name);
         }
     } else {
         if (comm_name_list) {
-            StringListPrint(comm_name_list);
+            string_list_print(comm_name_list);
         } else {
             printf("MMA: nothing to print\n");
         }
@@ -89,7 +89,7 @@ int mma_finalize() {
         MPI_Finalize();
     }
     if (comm_name_list) {
-        StringListDestroy(&comm_name_list);
+        string_list_destroy(&comm_name_list);
     }
     if (comm_array_size) {
         for (i = 0; i < comm_array_size; ++i) {
@@ -98,25 +98,25 @@ int mma_finalize() {
         }
         free(comm_array);
     }
-    __mma_reset();
+    mma_reset_();
     return 0;
 }
 
-static int __mma_get_exe_id(int* exe_id) {
-    StringList* exe_name_list;
+static int mma_get_exe_id_(int *exe_id) {
+    struct string_list *exe_name_list;
     MPI_Status status;
     int i;
     int msg_size;
     int list_size;
-    char* string;
-    char* exe_name;
+    char *string;
+    char *exe_name;
 
     /* Get exe ID */
-    __mma_get_exe_name(&exe_name);
+    mma_get_exe_name_(&exe_name);
 
     if (!world_rank) {
-        StringListCreate(&exe_name_list);
-        StringListAdd(exe_name_list, exe_name);
+        string_list_create(&exe_name_list);
+        string_list_add(exe_name_list, exe_name);
         /* Receive exe name of each process (except of itself) */
         for (i=1; i < world_size; ++i) {
             MPI_Probe(i, 0, MPI_COMM_WORLD, &status);
@@ -126,17 +126,17 @@ static int __mma_get_exe_id(int* exe_id) {
                 return 1;
             }
             MPI_Recv(string, msg_size, MPI_CHAR, status.MPI_SOURCE, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            StringListAdd(exe_name_list, string);
+            string_list_add(exe_name_list, string);
             free(string);
         }
 
         /* count unique exe names and tell other processes*/
-        list_size = StringListSize(exe_name_list);
+        list_size = string_list_size(exe_name_list);
         MPI_Bcast(&list_size, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
 
         /* distribute all unique exe names in sequence that others know their ID*/
         for (i=0; i < list_size; i++) {
-            string = StringListGet(exe_name_list, i);
+            string = string_list_get(exe_name_list, i);
             msg_size = (int) strlen(string) + 1;
             MPI_Bcast(&msg_size, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
             MPI_Bcast(string, msg_size, MPI_CHAR, 0, MPI_COMM_WORLD);
@@ -145,7 +145,7 @@ static int __mma_get_exe_id(int* exe_id) {
                 *exe_id = i;
             }
         }
-        StringListDestroy(&exe_name_list);
+        string_list_destroy(&exe_name_list);
 
     } else {
         /* send exe name to rank0 */
@@ -170,7 +170,7 @@ static int __mma_get_exe_id(int* exe_id) {
     return 0;
 }
 
-static int __mma_get_exe_name(char** name) {
+static int mma_get_exe_name_(char** name) {
 #if defined(_WIN32)
     char __progname[MAX_PATH];
     GetModuleFileName(NULL, __progname, MAX_PATH);
@@ -186,19 +186,20 @@ static int __mma_get_exe_name(char** name) {
 }
 
 int mma_initialize() {
-    StringList*     global_comm_name_list;
-    int             comm_size = 0;
-    int             global_comm_size;
-    MPI_Status      status;
-    MPI_Comm        tmp_comm;
-    int             msg_size;
-    char*           string;
-    int             i, j;
-    int             local_components;
-    int             global_components;
-    int             min_rank;
-    int             exe_id;
-    int             already_initialized_mpi;
+    struct string_list      *global_comm_name_list;
+    int                     comm_size = 0;
+    int                     global_comm_size;
+    MPI_Status              status;
+    MPI_Comm                tmp_comm;
+    int                     msg_size;
+    char                    *string;
+    int                     i;
+    int                     j;
+    int                     local_components;
+    int                     global_components;
+    int                     min_rank;
+    int                     exe_id;
+    int                     already_initialized_mpi;
 
     MPI_Initialized(&already_initialized_mpi);
 
@@ -217,10 +218,10 @@ int mma_initialize() {
 
     mma_comm_register("world");
 
-    __mma_get_exe_id(&exe_id);
+    mma_get_exe_id_(&exe_id);
 
     /* number of local registered comms */
-    comm_size = StringListSize(comm_name_list);
+    comm_size = string_list_size(comm_name_list);
     comm_array_size = comm_size;
     comm_array = calloc(comm_array_size, sizeof(struct mma_comm *));
     if (comm_array == NULL) {
@@ -240,8 +241,8 @@ int mma_initialize() {
         Rank 0 collects a list of all communicator names
         */
 
-        StringListCreate(&global_comm_name_list);
-        StringListAddAll(global_comm_name_list, comm_name_list);
+        string_list_create(&global_comm_name_list);
+        string_list_add_all(global_comm_name_list, comm_name_list);
 
         for (i = 0; i < global_comm_size - comm_size; ++i) {
             MPI_Probe(MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
@@ -251,16 +252,16 @@ int mma_initialize() {
                 return 4;
             }
             MPI_Recv(string, msg_size, MPI_CHAR, status.MPI_SOURCE, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            StringListAdd(global_comm_name_list, string);
+            string_list_add(global_comm_name_list, string);
             free(string);
         }
         /* number of global comms */
-        global_comm_size = StringListSize(global_comm_name_list);
+        global_comm_size = string_list_size(global_comm_name_list);
 
     } else {
         /* Send communicator names to root node */
         for (i = 0; i < comm_size; ++i) {
-            string = StringListGet(comm_name_list, i);
+            string = string_list_get(comm_name_list, i);
             MPI_Send(string, (int) strlen(string) + 1, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
         }
     }
@@ -274,7 +275,7 @@ int mma_initialize() {
     for (i = 0; i < global_comm_size; ++i) {
 
         if (!world_rank) {
-            string = StringListGet(global_comm_name_list, i);
+            string = string_list_get(global_comm_name_list, i);
             msg_size = (int) strlen(string) + 1;
             MPI_Bcast(&msg_size, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
         } else {
@@ -287,7 +288,7 @@ int mma_initialize() {
         MPI_Bcast(string, msg_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 
         /* check if process wants to join comm */
-        j = StringListIndexOf(comm_name_list, string);
+        j = string_list_index_of(comm_name_list, string);
 
         if (j >= 0) {
             /* Local process joins the current communicator */
@@ -296,18 +297,18 @@ int mma_initialize() {
             MPI_Comm_size(comm_array[j]->comm, &comm_array[j]->size);
 
             /* Split current group communicator into local and remote communicator be exe_id */
-            MPI_Comm_split(comm_array[j]->comm, exe_id, comm_array[j]->rank, &comm_array[j]->subComm);
-            MPI_Comm_rank(comm_array[j]->subComm, &comm_array[j]->subRank);
-            MPI_Comm_size(comm_array[j]->subComm, &comm_array[j]->subSize);
+            MPI_Comm_split(comm_array[j]->comm, exe_id, comm_array[j]->rank, &comm_array[j]->sub_comm);
+            MPI_Comm_rank(comm_array[j]->sub_comm, &comm_array[j]->sub_rank);
+            MPI_Comm_size(comm_array[j]->sub_comm, &comm_array[j]->sub_size);
 
             MPI_Comm_set_name(comm_array[j]->comm, string);
-            MPI_Comm_set_name(comm_array[j]->subComm, string);
+            MPI_Comm_set_name(comm_array[j]->sub_comm, string);
 
             comm_array[j]->name = malloc(sizeof(char) * (strlen(string) + 1));
             memcpy(comm_array[j]->name, string, sizeof(char) * (strlen(string) + 1));
 
             /* Count the number of different work_ids in the current group_comm */
-            if (!comm_array[j]->subRank) {
+            if (!comm_array[j]->sub_rank) {
                 local_components = 1;
             } else {
                 local_components = 0;
@@ -316,27 +317,27 @@ int mma_initialize() {
 
             /* If current communicator only consists of local ranks, delete group communicator. => User may still use self_comm */
             if (global_components == 1) {
-                comm_array[j]->myRank0 = 0;
-                comm_array[j]->otherRank0 = MPI_PROC_NULL;
+                comm_array[j]->my_rank0 = 0;
+                comm_array[j]->other_rank0 = MPI_PROC_NULL;
 
             /* group_comm consists of two workgroups */
             } else if (global_components == 2) {
                 MPI_Allreduce(&exe_id, &min_rank, 1, MPI_INTEGER, MPI_MIN, comm_array[j]->comm);
                 if (exe_id == min_rank) {
-                    comm_array[j]->myRank0 = 0;
-                    comm_array[j]->otherRank0 = comm_array[j]->subSize;
+                    comm_array[j]->my_rank0 = 0;
+                    comm_array[j]->other_rank0 = comm_array[j]->sub_size;
                 } else {
-                    comm_array[j]->myRank0 = comm_array[j]->size - comm_array[j]->subSize;
-                    comm_array[j]->otherRank0 = 0;
+                    comm_array[j]->my_rank0 = comm_array[j]->size - comm_array[j]->sub_size;
+                    comm_array[j]->other_rank0 = 0;
                 }
 
             } else { /*!TODO?: More than two exeIds/workgroups per group communicator. => otherRank0 wont be available*/
-                comm_array[j]->myRank0 = comm_array[j]->rank - comm_array[j]->subRank;
-                comm_array[j]->otherRank0 = MPI_PROC_NULL;
+                comm_array[j]->my_rank0 = comm_array[j]->rank - comm_array[j]->sub_rank;
+                comm_array[j]->other_rank0 = MPI_PROC_NULL;
             }
 
             comm_array[j]->comm_f = MPI_Comm_c2f(comm_array[j]->comm);
-            comm_array[j]->subComm_f = MPI_Comm_c2f(comm_array[j]->subComm);
+            comm_array[j]->sub_comm_f = MPI_Comm_c2f(comm_array[j]->sub_comm);
 
         } else {
             MPI_Comm_split(MPI_COMM_WORLD, 1, world_rank, &tmp_comm);
@@ -347,7 +348,7 @@ int mma_initialize() {
         }
     }
     if (!world_rank) {
-        StringListDestroy(&global_comm_name_list);
+        string_list_destroy(&global_comm_name_list);
     }
     return 0;
 }

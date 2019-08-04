@@ -17,15 +17,15 @@ extern "C" {
 struct mma_comm {
     int       rank;
     int       size;
-    int       myRank0;
-    int       otherRank0;
-    int       subRank;
-    int       subSize;
+    int       my_rank0;
+    int       other_rank0;
+    int       sub_rank;
+    int       sub_size;
     int       comm_f;
-    int       subComm_f;
+    int       sub_comm_f;
     char      *name;
     MPI_Comm  comm;
-    MPI_Comm  subComm;
+    MPI_Comm  sub_comm;
 };
 
 DLLEXPORT int mma_initialize();

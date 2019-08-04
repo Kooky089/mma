@@ -4,15 +4,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-void StringListCreate(StringList** list) {
-    *list = calloc(1, sizeof(StringList));
+void string_list_create(struct string_list **list) {
+    *list = calloc(1, sizeof(struct string_list));
     (*list)->first = NULL;
     (*list)->size = 0;
 }
 
-void StringListDestroy(StringList** list) {
-    StringElement* current;
-    StringElement* next;
+void string_list_destroy(struct string_list **list) {
+    struct string_node *current;
+    struct string_node *next;
     int i;
     current = (*list)->first;
     for (i = 0; i < (*list)->size; ++i) {
@@ -25,12 +25,12 @@ void StringListDestroy(StringList** list) {
     *list = NULL;
 }
 
-int StringListAdd(StringList* list, const char* string) {
-    StringElement* new;
-    StringElement* current;
+int string_list_add(struct string_list *list, const char *string) {
+    struct string_node *new;
+    struct string_node *current;
     int i;
 
-    new = malloc(sizeof(StringElement));
+    new = malloc(sizeof(struct string_node));
     new->value = malloc(sizeof(char) * (strlen(string) + 1));
     memcpy(new->value, string, sizeof(char) * (strlen(string) + 1));
     new->next = NULL;
@@ -58,22 +58,22 @@ int StringListAdd(StringList* list, const char* string) {
     return 0;
 }
 
-int StringListAddAll(StringList* list, StringList* list2) {
-    StringElement* current;
+int string_list_add_all(struct string_list *list, struct string_list *list2) {
+    struct string_node* current;
     int i;
 
     current = list2->first;
     for (i = 0; i < list2->size; ++i) {
-        StringListAdd(list, current->value);
+        string_list_add(list, current->value);
         current = current->next;
     }
     return 0;
 }
 
-void StringListPrint(StringList* list) {
-    StringElement* current;
+void string_list_print(struct string_list *list) {
+    struct string_node* current;
     int i;
-    printf("String Set:\n");
+    printf("String List:\n");
     current = list->first;
     for (i = 0; i < list->size; ++i) {
         printf("%d: %s\n", i, current->value);
@@ -81,12 +81,12 @@ void StringListPrint(StringList* list) {
     }
 }
 
-int StringListSize(StringList* list) {
+int string_list_size(struct string_list *list) {
     return list->size;
 }
 
-int StringListIndexOf(StringList* list, const char* string) {
-    StringElement* current;
+int string_list_index_of(struct string_list *list, const char *string) {
+    struct string_node *current;
     int i;
 
     current = list->first;
@@ -99,8 +99,8 @@ int StringListIndexOf(StringList* list, const char* string) {
     return -1;
 }
 
-char* StringListGet(StringList* list, int index) {
-    StringElement* current;
+char* string_list_get(struct string_list *list, int index) {
+    struct string_node* current;
     int i;
     current = list->first;
     for (i = 0; i < list->size; ++i) {

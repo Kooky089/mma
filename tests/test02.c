@@ -26,8 +26,8 @@ int main(int argc, char* argv[]) {
 
     MPI_Init(NULL, NULL);
 
-    MPI_Comm_rank(MPI_COMM_WORLD,&world_rank);
-    MPI_Comm_size(MPI_COMM_WORLD,&world_size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
     if (world_rank == 0) {
         error = mma_comm_register("a"); assert(error == 0);
@@ -48,11 +48,11 @@ int main(int argc, char* argv[]) {
     }
 
 
-    struct mma_comm *testErrorComm;
+    struct mma_comm *test_error_comm;
     // ask for comm before initialized
-    error = mma_comm_get("a",&testErrorComm); assert(error != 0);
+    error = mma_comm_get("a",&test_error_comm); assert(error != 0);
     // ask for comm that doesnt exist
-    error = mma_comm_get("ab",&testErrorComm); assert(error != 0);
+    error = mma_comm_get("ab",&test_error_comm); assert(error != 0);
 
     error = mma_initialize(); assert(error == 0);
     struct mma_comm *world;
@@ -60,26 +60,26 @@ int main(int argc, char* argv[]) {
 
     assert(world->rank == world_rank);
     assert(world->size == world_size);
-    assert(world->otherRank0 == MPI_PROC_NULL);
+    assert(world->other_rank0 == MPI_PROC_NULL);
 
     if (world_rank == 0) {
         struct mma_comm *a;
         error = mma_comm_get("a",&a); assert(error == 0);
         assert(a->rank == 0);
         assert(a->size == 5);
-        assert(a->subRank == 0);
-        assert(a->subSize == 3);
-        assert(a->myRank0 == 0);
-        assert(a->otherRank0 == 3);
+        assert(a->sub_rank == 0);
+        assert(a->sub_size == 3);
+        assert(a->my_rank0 == 0);
+        assert(a->other_rank0 == 3);
         assert(!strcmp(a->name,"a"));
         struct mma_comm *b;
         error = mma_comm_get("b",&b); assert(error == 0);
         assert(b->rank == 0);
         assert(b->size == 3);
-        assert(b->subRank == 0);
-        assert(b->subSize == 1);
-        assert(b->myRank0 == 0);
-        assert(b->otherRank0 == 1);
+        assert(b->sub_rank == 0);
+        assert(b->sub_size == 1);
+        assert(b->my_rank0 == 0);
+        assert(b->other_rank0 == 1);
         assert(!strcmp(b->name,"b"));
     }
     if (world_rank == 1) {
@@ -87,19 +87,19 @@ int main(int argc, char* argv[]) {
         error = mma_comm_get("a",&a); assert(error == 0);
         assert(a->rank == 1);
         assert(a->size == 5);
-        assert(a->subRank == 1);
-        assert(a->subSize == 3);
-        assert(a->myRank0 == 0);
-        assert(a->otherRank0 == 3);
+        assert(a->sub_rank == 1);
+        assert(a->sub_size == 3);
+        assert(a->my_rank0 == 0);
+        assert(a->other_rank0 == 3);
         assert(!strcmp(a->name,"a"));
         struct mma_comm *c;
         error = mma_comm_get("c",&c); assert(error == 0);
         assert(c->rank == 0);
         assert(c->size == 2);
-        assert(c->subRank == 0);
-        assert(c->subSize == 2);
-        assert(c->myRank0 == 0);
-        assert(c->otherRank0 == MPI_PROC_NULL);
+        assert(c->sub_rank == 0);
+        assert(c->sub_size == 2);
+        assert(c->my_rank0 == 0);
+        assert(c->other_rank0 == MPI_PROC_NULL);
         assert(!strcmp(c->name,"c"));
     }
     if (world_rank == 2) {
@@ -107,19 +107,19 @@ int main(int argc, char* argv[]) {
         error = mma_comm_get("a",&a); assert(error == 0);
         assert(a->rank == 2);
         assert(a->size == 5);
-        assert(a->subRank == 2);
-        assert(a->subSize == 3);
-        assert(a->myRank0 == 0);
-        assert(a->otherRank0 == 3);
+        assert(a->sub_rank == 2);
+        assert(a->sub_size == 3);
+        assert(a->my_rank0 == 0);
+        assert(a->other_rank0 == 3);
         assert(!strcmp(a->name,"a"));
         struct mma_comm *c;
         error = mma_comm_get("c",&c); assert(error == 0);
         assert(c->rank == 1);
         assert(c->size == 2);
-        assert(c->subRank == 1);
-        assert(c->subSize == 2);
-        assert(c->myRank0 == 0);
-        assert(c->otherRank0 == MPI_PROC_NULL);
+        assert(c->sub_rank == 1);
+        assert(c->sub_size == 2);
+        assert(c->my_rank0 == 0);
+        assert(c->other_rank0 == MPI_PROC_NULL);
         assert(!strcmp(c->name,"c"));
     }
     if (world_rank == 3) {
@@ -127,19 +127,19 @@ int main(int argc, char* argv[]) {
         error = mma_comm_get("b",&b); assert(error == 0);
         assert(b->rank == 1);
         assert(b->size == 3);
-        assert(b->subRank == 0);
-        assert(b->subSize == 2);
-        assert(b->myRank0 == 1);
-        assert(b->otherRank0 == 0);
+        assert(b->sub_rank == 0);
+        assert(b->sub_size == 2);
+        assert(b->my_rank0 == 1);
+        assert(b->other_rank0 == 0);
         assert(!strcmp(b->name,"b"));
         struct mma_comm *d;
         error = mma_comm_get("d",&d); assert(error == 0);
         assert(d->rank == 0);
         assert(d->size == 4);
-        assert(d->subRank == 0);
-        assert(d->subSize == 2);
-        assert(d->myRank0 == 0);
-        assert(d->otherRank0 == 2);
+        assert(d->sub_rank == 0);
+        assert(d->sub_size == 2);
+        assert(d->my_rank0 == 0);
+        assert(d->other_rank0 == 2);
         assert(!strcmp(d->name,"d"));
     }
     if (world_rank == 4) {
@@ -147,19 +147,19 @@ int main(int argc, char* argv[]) {
         error = mma_comm_get("b",&b); assert(error == 0);
         assert(b->rank == 2);
         assert(b->size == 3);
-        assert(b->subRank == 1);
-        assert(b->subSize == 2);
-        assert(b->myRank0 == 1);
-        assert(b->otherRank0 == 0);
+        assert(b->sub_rank == 1);
+        assert(b->sub_size == 2);
+        assert(b->my_rank0 == 1);
+        assert(b->other_rank0 == 0);
         assert(!strcmp(b->name,"b"));
         struct mma_comm *d;
         error = mma_comm_get("d",&d); assert(error == 0);
         assert(d->rank == 1);
         assert(d->size == 4);
-        assert(d->subRank == 1);
-        assert(d->subSize == 2);
-        assert(d->myRank0 == 0);
-        assert(d->otherRank0 == 2);
+        assert(d->sub_rank == 1);
+        assert(d->sub_size == 2);
+        assert(d->my_rank0 == 0);
+        assert(d->other_rank0 == 2);
         assert(!strcmp(d->name,"d"));
     }
     if (world_rank == 5) {
@@ -167,19 +167,19 @@ int main(int argc, char* argv[]) {
         error = mma_comm_get("a",&a); assert(error == 0);
         assert(a->rank == 3);
         assert(a->size == 5);
-        assert(a->subRank == 0);
-        assert(a->subSize == 2);
-        assert(a->myRank0 == 3);
-        assert(a->otherRank0 == 0);
+        assert(a->sub_rank == 0);
+        assert(a->sub_size == 2);
+        assert(a->my_rank0 == 3);
+        assert(a->other_rank0 == 0);
         assert(!strcmp(a->name,"a"));
         struct mma_comm *d;
         error = mma_comm_get("d",&d); assert(error == 0);
         assert(d->rank == 2);
         assert(d->size == 4);
-        assert(d->subRank == 0);
-        assert(d->subSize == 2);
-        assert(d->myRank0 == 2);
-        assert(d->otherRank0 == 0);
+        assert(d->sub_rank == 0);
+        assert(d->sub_size == 2);
+        assert(d->my_rank0 == 2);
+        assert(d->other_rank0 == 0);
         assert(!strcmp(d->name,"d"));
     }
     if (world_rank == 6) {
@@ -187,19 +187,19 @@ int main(int argc, char* argv[]) {
         error = mma_comm_get("a",&a); assert(error == 0);
         assert(a->rank == 4);
         assert(a->size == 5);
-        assert(a->subRank == 1);
-        assert(a->subSize == 2);
-        assert(a->myRank0 == 3);
-        assert(a->otherRank0 == 0);
+        assert(a->sub_rank == 1);
+        assert(a->sub_size == 2);
+        assert(a->my_rank0 == 3);
+        assert(a->other_rank0 == 0);
         assert(!strcmp(a->name,"a"));
         struct mma_comm *d;
         error = mma_comm_get("d",&d); assert(error == 0);
         assert(d->rank == 3);
         assert(d->size == 4);
-        assert(d->subRank == 1);
-        assert(d->subSize == 2);
-        assert(d->myRank0 == 2);
-        assert(d->otherRank0 == 0);
+        assert(d->sub_rank == 1);
+        assert(d->sub_size == 2);
+        assert(d->my_rank0 == 2);
+        assert(d->other_rank0 == 0);
         assert(!strcmp(d->name,"d"));
     }
     error = mma_print(); assert(error == 0);

@@ -5,12 +5,12 @@ module mma
    type, bind(c) :: mma_comm
       integer(c_int) :: rank
       integer(c_int) :: size
-      integer(c_int) :: myRank0
-      integer(c_int) :: otherRank0
-      integer(c_int) :: subRank
-      integer(c_int) :: subSize
+      integer(c_int) :: my_rank0
+      integer(c_int) :: other_rank0
+      integer(c_int) :: sub_rank
+      integer(c_int) :: sub_size
       integer(c_int) :: comm
-      integer(c_int) :: subComm
+      integer(c_int) :: sub_comm
    end type
       
 contains

@@ -1,25 +1,23 @@
 #if !defined(_MMA_STRING_LIST_H)
 #define _MMA_STRING_LIST_H
 
-typedef struct _StringElement StringElement;
-struct _StringElement {
-    StringElement   *next;
-    char*           value;
+struct string_node {
+    struct string_node      *next;
+    char                    *value;
 };
 
-typedef struct _StringList StringList;
-struct _StringList {
-    StringElement   *first;
-    int             size;
+struct string_list {
+    struct string_node      *first;
+    int                     size;
 };
 
-void    StringListCreate(StringList **);
-void    StringListDestroy(StringList **);
-int     StringListAdd(StringList *, const char *);
-int     StringListAddAll(StringList *, StringList *);
-void    StringListPrint(StringList *);
-int     StringListSize(StringList *);
-int     StringListIndexOf(StringList *, const char *);
-char*   StringListGet(StringList *, int);
+void    string_list_create(struct string_list **);
+void    string_list_destroy(struct string_list **);
+int     string_list_add(struct string_list *, const char *);
+int     string_list_add_all(struct string_list *, struct string_list *);
+void    string_list_print(struct string_list *);
+int     string_list_size(struct string_list *);
+int     string_list_index_of(struct string_list *, const char *);
+char   *string_list_get(struct string_list *, int);
 
 #endif
