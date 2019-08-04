@@ -1,6 +1,6 @@
 language: c
 install:
-  - sudo apt-get install libcr-dev mpich2 mpich2-doc
+  - sudo apt-get install mpich
 script:
   - mkdir _build
   - cd _build
