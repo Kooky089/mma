@@ -1,11 +1,11 @@
 language: c
 before_install:
-  - sudo apt-get install libmpich-dev
+  - sudo apt-get install mpich libmpich-dev
 install:
-script:
   - mkdir _build
   - cd _build
   - CC=mpicc FC=mpif90 cmake ../
   - make
+script:
   - make test
 
