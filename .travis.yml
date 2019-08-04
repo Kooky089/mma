@@ -1,6 +1,7 @@
 language: c
+before_install:
+  - sudo apt-get install libmpich-dev
 install:
-  - sudo apt-get install mpich
 script:
   - mkdir _build
   - cd _build
