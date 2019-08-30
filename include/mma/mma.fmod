@@ -1,3 +1,35 @@
+module mma_private
+   implicit none
+   
+   interface
+      subroutine mma_comm_get_fc(string, comm, ierror) bind(c)
+         use, intrinsic :: iso_c_binding
+         character(c_char), dimension(*), intent(in) :: string
+         type(c_ptr), intent(out) :: comm
+         integer(c_int), intent(out) :: ierror
+      end subroutine
+      subroutine mma_comm_register_fc(string, ierror) bind(c)
+         use, intrinsic :: iso_c_binding
+         character(c_char), dimension(*), intent(in) :: string
+         integer(c_int), intent(out) :: ierror
+      end subroutine
+      subroutine mma_print_fc(ierror) bind(c)
+         use, intrinsic :: iso_c_binding
+         integer(c_int), intent(out) :: ierror
+      end subroutine
+      subroutine mma_finalize_fc(ierror) bind(c)
+         use, intrinsic :: iso_c_binding
+         integer(c_int), intent(out) :: ierror
+      end subroutine
+      subroutine mma_initialize_fc(ierror) bind(c)
+         use, intrinsic :: iso_c_binding
+         integer(c_int), intent(out) :: ierror
+      end subroutine
+   end interface
+   
+contains
+end module
+
 module mma
    use iso_c_binding
    implicit none
@@ -16,86 +48,45 @@ module mma
 contains
    
    subroutine mma_comm_get(string, comm, ierror)
+      use mma_private
       implicit none
-      character(*) :: string
-      type(mma_comm), pointer :: comm
-      integer(c_int) :: ierror
-      
-      interface
-         subroutine mma_comm_get_f(string, comm, ierror) bind(c)
-            use, intrinsic :: iso_c_binding
-            character(c_char), dimension(*) :: string
-            type(c_ptr) :: comm
-            integer(c_int) :: ierror
-         end subroutine
-      end interface
-      
+      character(*), intent(in) :: string
+      type(mma_comm), pointer, intent(out) :: comm
+      integer(c_int), intent(out) :: ierror
+            
       type(c_ptr) :: comm_c
       
-      call mma_comm_get_f(string // C_NULL_CHAR, comm_c, ierror)
+      call mma_comm_get_fc(string // C_NULL_CHAR, comm_c, ierror)
       call c_f_pointer(comm_c, comm)
    end subroutine
    
-   
    subroutine mma_comm_register(string, ierror)
+      use mma_private
       implicit none
-      character(*) :: string
-      integer(c_int) :: ierror
-      
-      interface
-         subroutine mma_comm_register_f(string, ierror) bind(c)
-            use, intrinsic :: iso_c_binding
-            character(c_char), dimension(*) :: string
-            integer(c_int) :: ierror
-         end subroutine
-      end interface
-      
-      call mma_comm_register_f(string // C_NULL_CHAR, ierror)
+      character(*), intent(in) :: string
+      integer(c_int), intent(out) :: ierror
+      call mma_comm_register_fc(string // C_NULL_CHAR, ierror)
    end subroutine
-   
    
    subroutine mma_print(ierror)
+      use mma_private
       implicit none
-      integer(c_int) :: ierror
-      
-      interface
-         subroutine mma_print_f(ierror) bind(c)
-            use, intrinsic :: iso_c_binding
-            integer(c_int) :: ierror
-         end subroutine
-      end interface
-      
-      call mma_print_f(ierror)
+      integer(c_int), intent(out) :: ierror
+      call mma_print_fc(ierror)
    end subroutine
-   
    
    subroutine mma_finalize(ierror)
+      use mma_private
       implicit none
-      integer(c_int) :: ierror
-      
-      interface
-         subroutine mma_finalize_f(ierror) bind(c)
-            use, intrinsic :: iso_c_binding
-            integer(c_int) :: ierror
-         end subroutine
-      end interface
-      
-      call mma_finalize_f(ierror)
+      integer(c_int), intent(out) :: ierror
+      call mma_finalize_fc(ierror)
    end subroutine
    
-   
    subroutine mma_initialize(ierror)
+      use mma_private
       implicit none
-      integer(c_int) :: ierror
-      
-      interface
-         subroutine mma_initialize_f(ierror) bind(c)
-            use, intrinsic :: iso_c_binding
-            integer(c_int) :: ierror
-         end subroutine
-      end interface
-      
-      call mma_initialize_f(ierror)
+      integer(c_int), intent(out) :: ierror
+      call mma_initialize_fc(ierror)
    end subroutine
    
 end module
