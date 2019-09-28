@@ -352,21 +352,3 @@ int mma_initialize() {
     }
     return 0;
 }
-
-
-/* Fortran wrapper */
-void mma_comm_get_fc(const char *string, struct mma_comm **comm, int *ierror) {
-    *ierror = mma_comm_get(string, comm);
-}
-void mma_comm_register_fc(const char *string, int *ierror) {
-    *ierror = mma_comm_register(string);
-}
-void mma_print_fc(int *ierror) {
-    *ierror = mma_print();
-}
-void mma_initialize_fc(int *ierror) {
-    *ierror = mma_initialize();
-}
-void mma_finalize_fc(int *ierror) {
-    *ierror = mma_finalize();
-}

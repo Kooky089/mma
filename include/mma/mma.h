@@ -35,16 +35,6 @@ DLLEXPORT int mma_comm_register(const char *comm_name);
 DLLEXPORT int mma_comm_get(const char *comm_name, struct mma_comm **comm);
 
 
-/* Fortran wrapper */
-DLLEXPORT void mma_initialize_fc(int *ierror);
-DLLEXPORT void mma_finalize_fc(int *ierror);
-DLLEXPORT void mma_print_fc(int *ierror);
-DLLEXPORT void mma_comm_register_fc(const char *comm_name, int *ierror);
-DLLEXPORT void mma_comm_get_fc(const char *comm_name, struct mma_comm **comm, int *ierror);
-
-
-
-
 #if defined(__cplusplus)
 }
 #endif
