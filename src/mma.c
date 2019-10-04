@@ -19,7 +19,7 @@ static int                  comm_array_size = 0;
 static int                  initialized = 0;
 
 static int mma_get_exe_id_(int *exe_id);
-static int mma_get_exe_name_(char **name);
+static int mma_get_exe_name_(const char **name);
 
 static int mma_reset_() {
     world_rank = MPI_PROC_NULL;
@@ -109,7 +109,7 @@ static int mma_get_exe_id_(int *exe_id) {
     int msg_size;
     int list_size;
     char *string;
-    char *exe_name;
+    const char *exe_name;
 
     /* Get exe ID */
     mma_get_exe_name_(&exe_name);
@@ -166,22 +166,17 @@ static int mma_get_exe_id_(int *exe_id) {
             free(string);
         }
     }
-    free(exe_name);
     return 0;
 }
 
-static int mma_get_exe_name_(char** name) {
+static int mma_get_exe_name_(const char** name) {
 #if defined(_WIN32)
     char __progname[MAX_PATH];
     GetModuleFileName(NULL, __progname, MAX_PATH);
 #else
     extern const char* __progname;
 #endif
-    *name = malloc(sizeof(char) * strlen(__progname) + 1);
-    if (name == NULL) {
-        return 1;
-    }
-    memcpy(*name, __progname, sizeof(char) * strlen(__progname) + 1);
+    * name = __progname;
     return 0;
 }
 
