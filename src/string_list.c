@@ -1,18 +1,18 @@
-#include"string_list.h"
+#include "string_list.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-void string_list_create(struct string_list **list) {
+void string_list_create(struct string_list** list) {
     *list = calloc(1, sizeof(struct string_list));
     (*list)->first = NULL;
     (*list)->size = 0;
 }
 
-void string_list_destroy(struct string_list **list) {
-    struct string_node *current;
-    struct string_node *next;
+void string_list_destroy(struct string_list** list) {
+    struct string_node* current;
+    struct string_node* next;
     int i;
     current = (*list)->first;
     for (i = 0; i < (*list)->size; ++i) {
@@ -25,9 +25,9 @@ void string_list_destroy(struct string_list **list) {
     *list = NULL;
 }
 
-int string_list_add(struct string_list *list, const char *string) {
-    struct string_node *new;
-    struct string_node *current;
+int string_list_add(struct string_list* list, const char* string) {
+    struct string_node* new;
+    struct string_node* current;
     int i;
 
     new = malloc(sizeof(struct string_node));
@@ -58,7 +58,7 @@ int string_list_add(struct string_list *list, const char *string) {
     return 0;
 }
 
-int string_list_add_all(struct string_list *list, struct string_list *list2) {
+int string_list_add_all(struct string_list* list, struct string_list* list2) {
     struct string_node* current;
     int i;
 
@@ -70,7 +70,7 @@ int string_list_add_all(struct string_list *list, struct string_list *list2) {
     return 0;
 }
 
-void string_list_print(struct string_list *list) {
+void string_list_print(struct string_list* list) {
     struct string_node* current;
     int i;
     printf("String List:\n");
@@ -81,12 +81,10 @@ void string_list_print(struct string_list *list) {
     }
 }
 
-int string_list_size(struct string_list *list) {
-    return list->size;
-}
+int string_list_size(struct string_list* list) { return list->size; }
 
-int string_list_index_of(struct string_list *list, const char *string) {
-    struct string_node *current;
+int string_list_index_of(struct string_list* list, const char* string) {
+    struct string_node* current;
     int i;
 
     current = list->first;
@@ -99,7 +97,7 @@ int string_list_index_of(struct string_list *list, const char *string) {
     return -1;
 }
 
-char* string_list_get(struct string_list *list, int index) {
+char* string_list_get(struct string_list* list, int index) {
     struct string_node* current;
     int i;
     current = list->first;
