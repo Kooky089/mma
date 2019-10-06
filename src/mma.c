@@ -1,5 +1,6 @@
 #include <mma/mma.h>
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,9 +18,10 @@ static struct string_list   *comm_name_list = NULL;
 static struct mma_comm      **comm_array = NULL;
 static int                  comm_array_size = 0;
 static int                  initialized = 0;
+static char*                _name = NULL;
 
-static int mma_get_exe_id_(int *exe_id);
-static int mma_get_exe_name_(const char **name);
+static int mma_get_id_(int *id);
+static int mma_get_name_(const char **name);
 
 static int mma_reset_() {
     world_rank = MPI_PROC_NULL;
@@ -28,6 +30,17 @@ static int mma_reset_() {
     comm_array = NULL;
     comm_array_size = 0;
     initialized = 0;
+    return 0;
+}
+
+int mma_set_name(const char* name) {
+    assert(name);
+    free(_name);
+    _name = malloc(sizeof(char) * strlen(name) + 1);
+    if (!_name) {
+        return 1;
+    }
+    memcpy(_name, name, sizeof(char) * strlen(name) + 1);
     return 0;
 }
 
@@ -98,11 +111,12 @@ int mma_finalize() {
         }
         free(comm_array);
     }
+    free(_name);
     mma_reset_();
     return 0;
 }
 
-static int mma_get_exe_id_(int *exe_id) {
+static int mma_get_id_(int *exe_id) {
     struct string_list *exe_name_list;
     MPI_Status status;
     int i;
@@ -112,7 +126,7 @@ static int mma_get_exe_id_(int *exe_id) {
     const char *exe_name;
 
     /* Get exe ID */
-    mma_get_exe_name_(&exe_name);
+    mma_get_name_(&exe_name);
 
     if (!world_rank) {
         string_list_create(&exe_name_list);
@@ -169,15 +183,19 @@ static int mma_get_exe_id_(int *exe_id) {
     return 0;
 }
 
-static int mma_get_exe_name_(const char** name) {
+static int mma_get_name_(const char** name) {
+    int ierror = 0;
 #if defined(_WIN32)
     char __progname[MAX_PATH];
     GetModuleFileName(NULL, __progname, MAX_PATH);
 #else
     extern const char* __progname;
 #endif
-    * name = __progname;
-    return 0;
+    if (!_name) {
+        ierror = mma_set_name(__progname);
+    }
+    *name = _name;
+    return ierror;
 }
 
 int mma_initialize() {
@@ -213,7 +231,7 @@ int mma_initialize() {
 
     mma_comm_register("world");
 
-    mma_get_exe_id_(&exe_id);
+    mma_get_id_(&exe_id);
 
     /* number of local registered comms */
     comm_size = string_list_size(comm_name_list);

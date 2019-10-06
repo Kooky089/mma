@@ -33,7 +33,7 @@ DLLEXPORT int mma_finalize();
 DLLEXPORT int mma_print();
 DLLEXPORT int mma_comm_register(const char *comm_name);
 DLLEXPORT int mma_comm_get(const char *comm_name, struct mma_comm **comm);
-
+DLLEXPORT int mma_set_name(const char* name);
 
 #if defined(__cplusplus)
 }
