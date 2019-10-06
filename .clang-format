@@ -5,3 +5,4 @@ AlignConsecutiveDeclarations: false
 DerivePointerAlignment: false
 PointerAlignment: Left
 ColumnLimit: 100
+SortIncludes: true
