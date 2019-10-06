@@ -138,6 +138,8 @@ static int mma_get_id_(int* exe_id) {
     char* string;
     const char* exe_name;
 
+    *exe_id = -1;
+
     /* Get exe ID */
     mma_get_name_(&exe_name);
 
@@ -195,6 +197,7 @@ static int mma_get_id_(int* exe_id) {
             free(string);
         }
     }
+    assert(*exe_id != -1);
     return 0;
 }
 
@@ -214,7 +217,7 @@ static int mma_get_name_(const char** name) {
 }
 
 int mma_initialize() {
-    struct string_list* global_comm_name_list;
+    struct string_list* global_comm_name_list = NULL;
     int comm_size = 0;
     int global_comm_size;
     MPI_Status status;

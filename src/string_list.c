@@ -1,5 +1,6 @@
 #include "string_list.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,14 +27,14 @@ void string_list_destroy(struct string_list** list) {
 }
 
 int string_list_add(struct string_list* list, const char* string) {
-    struct string_node* new;
+    struct string_node* next;
     struct string_node* current;
     int i;
 
-    new = malloc(sizeof(struct string_node));
-    new->value = malloc(sizeof(char) * (strlen(string) + 1));
-    memcpy(new->value, string, sizeof(char) * (strlen(string) + 1));
-    new->next = NULL;
+    next = malloc(sizeof(struct string_node));
+    next->value = malloc(sizeof(char) * (strlen(string) + 1));
+    memcpy(next->value, string, sizeof(char) * (strlen(string) + 1));
+    next->next = NULL;
 
     if (list->size > 0) {
         /* add after last element */
@@ -45,14 +46,15 @@ int string_list_add(struct string_list* list, const char* string) {
             }
             /* string already exists in set */
             if (!strcmp(current->value, string)) {
+                free(next);
                 return 1;
             }
         }
-        current->next = new;
+        current->next = next;
         ++list->size;
     } else {
         /* add first element */
-        list->first = new;
+        list->first = next;
         list->size = 1;
     }
     return 0;
@@ -100,6 +102,7 @@ int string_list_index_of(struct string_list* list, const char* string) {
 char* string_list_get(struct string_list* list, int index) {
     struct string_node* current;
     int i;
+    assert(list);
     current = list->first;
     for (i = 0; i < list->size; ++i) {
         if (i == index) {
