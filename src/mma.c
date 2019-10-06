@@ -94,6 +94,23 @@ int mma_print() {
     return 0;
 }
 
+int mma_print_collective(MPI_Comm comm) {
+    int current_rank;
+    int rank;
+    int size;
+    int ierror = 0;
+
+    MPI_Comm_rank(comm, &rank);
+    MPI_Comm_size(comm, &size);
+
+    for (current_rank = 0; current_rank < size; current_rank++) {
+        if (current_rank == rank) {
+            ierror = mma_print();
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+    return ierror;
+}
 
 
 int mma_finalize() {

@@ -202,7 +202,7 @@ int main(int argc, char* argv[]) {
         assert(d->other_rank0 == 0);
         assert(!strcmp(d->name,"d"));
     }
-    error = mma_print(); assert(error == 0);
+    error = mma_print_collective(MPI_COMM_WORLD); assert(error == 0);
     error = mma_finalize(); assert(error == 0);
     return 0;
 }
