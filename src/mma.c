@@ -187,7 +187,7 @@ static int mma_get_id_(int* exe_id) {
         for (i = 0; i < list_size; ++i) {
             MPI_Bcast(&msg_size, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
             string = malloc(sizeof(char) * msg_size);
-            if (string == NULL) {
+            if (!string) {
                 return 1;
             }
             MPI_Bcast(string, msg_size, MPI_CHAR, 0, MPI_COMM_WORLD);
@@ -280,7 +280,7 @@ int mma_initialize() {
             MPI_Probe(MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
             MPI_Get_count(&status, MPI_CHAR, &msg_size);
             string = malloc(sizeof(char) * msg_size);
-            if (string == NULL) {
+            if (!string) {
                 return 4;
             }
             MPI_Recv(string, msg_size, MPI_CHAR, status.MPI_SOURCE, 0, MPI_COMM_WORLD,
@@ -313,7 +313,7 @@ int mma_initialize() {
         } else {
             MPI_Bcast(&msg_size, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
             string = malloc(sizeof(char) * msg_size);
-            if (string == NULL) {
+            if (!string) {
                 return 5;
             }
         }

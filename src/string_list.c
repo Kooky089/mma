@@ -32,8 +32,16 @@ int string_list_add(struct string_list* list, const char* string) {
     int i;
 
     next = malloc(sizeof(struct string_node));
+    if (!next) {
+        return 1;
+    }
     next->value = malloc(sizeof(char) * (strlen(string) + 1));
+    if (!next->value) {
+        free(next);
+        return 1;
+    }
     memcpy(next->value, string, sizeof(char) * (strlen(string) + 1));
+
     next->next = NULL;
 
     if (list->size > 0) {
@@ -46,6 +54,7 @@ int string_list_add(struct string_list* list, const char* string) {
             }
             /* string already exists in set */
             if (!strcmp(current->value, string)) {
+                free(next->value);
                 free(next);
                 return 1;
             }
