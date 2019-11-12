@@ -232,11 +232,11 @@ int mma_initialize() {
     int exe_id;
     int already_initialized_mpi;
 
-    MPI_Initialized(&already_initialized_mpi);
-
     if (initialized) {
         return !already_initialized_mpi;
     }
+
+    MPI_Initialized(&already_initialized_mpi);
 
     if (!already_initialized_mpi) {
         MPI_Init(NULL, NULL);
