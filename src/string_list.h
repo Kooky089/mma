@@ -1,5 +1,5 @@
-#if !defined(_MMA_STRING_LIST_H)
-#define _MMA_STRING_LIST_H
+#if !defined(MMA_STRING_LIST_H)
+#define MMA_STRING_LIST_H
 
 struct string_node {
     struct string_node      *next;
