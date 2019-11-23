@@ -12,6 +12,17 @@ endif ()
 list (APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 find_package (CMPI REQUIRED)
 
+if(${CMAKE_VERSION} VERSION_LESS "3.12.0")
+  message("Workaround for CMAKE < 3.12. Enabling CXX")
+  message("See: https://gitlab.kitware.com/cmake/cmake/merge_requests/1799")
+  check_language(CXX)
+  if(CMAKE_CXX_COMPILER)
+    enable_language(CXX)
+  else()
+    message(FATAL_ERROR "No CXX support")
+  endif()
+endif()
+
 add_subdirectory (src)
 add_subdirectory (examples)
 
