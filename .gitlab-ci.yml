@@ -1,5 +1,12 @@
 default:
   image: ubuntu
-job:
+  
+build:
+  before_script:
+    - apt-get update
+    - apt-get install -y cmake g++ mpich libmpich-dev
   script:
     - uname -a
+    - whoami
+    - ls -lisa
+    
