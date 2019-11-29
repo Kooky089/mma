@@ -1,0 +1,17 @@
+default:
+  image: ubuntu
+  
+build:
+  before_script:
+    - apt-get update
+    - apt-get install -y cmake g++ mpich libmpich-dev
+  script:
+    - uname -a
+    - whoami
+    - ls -lisa
+    - mkdir _debug
+    - cd _debug
+    - CC=mpicc FC=mpif90 cmake -DCMAKE_BUILD_TYPE=Debug ..
+    - make
+    - make test
+    
