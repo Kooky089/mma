@@ -47,12 +47,44 @@ if (MSVC)
               message (STATUS " Could NOT find mpi.h file in: ${MPI_INCLUDE}")
             else ()
               if (CMAKE_C_COMPILER)
-                set (MPI_FOUND TRUE)
-                set (MPI_C_FOUND TRUE)
+                #try_run(MPI_C_RUNS
+                #  MPI_C_COMPILES
+                #  ${CMAKE_CURRENT_BINARY_DIR}/cmpi
+                #  "${CMAKE_CURRENT_LIST_DIR}/mpi_test.c"
+                #  CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${MPI_INCLUDE}"
+                #  LINK_LIBRARIES ${MPI_LIB}
+                #  )
+                #if(MPI_C_COMPILES)
+                  set (MPI_FOUND TRUE)
+                  set (MPI_C_FOUND TRUE)
+                #  if(MPI_C_RUNS STREQUAL "0")
+                #    set (MPI_C_WORKS TRUE)
+                #  else()
+                #    message(WARNING " Could NOT run MPI sample. Either MPI Runtime is missing or not loaded correctly into PATH")
+                #  endif()
+                #else()
+                #  message(STATUS " Could NOT compile MPI sample")
+                #endif()
               endif ()
               if (CMAKE_CXX_COMPILER)
-                set (MPI_FOUND TRUE)
-                set (MPI_CXX_FOUND TRUE)
+                #try_run(MPI_CXX_RUNS
+                #  MPI_CXX_COMPILES
+                #  ${CMAKE_CURRENT_BINARY_DIR}/cmpi
+                #  "${CMAKE_CURRENT_LIST_DIR}/mpi_test.cpp"
+                #  CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${MPI_INCLUDE}"
+                #  LINK_LIBRARIES ${MPI_LIB}
+                #  )
+                #if(MPI_CXX_COMPILES)
+                  set (MPI_FOUND TRUE)
+                  set (MPI_CXX_FOUND TRUE)
+                #  if(MPI_CXX_RUNS STREQUAL "0")
+                #    set (MPI_CXX_WORKS TRUE)
+                #  else()
+                #    message(WARNING " Could NOT run MPI sample. Either MPI Runtime is missing or not loaded correctly into PATH")
+                #  endif()
+                #else()
+                #  message(STATUS " Could NOT compile MPI sample")
+                #endif()
               endif ()
             endif ()
           endif ()
