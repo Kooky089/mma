@@ -1,3 +1,4 @@
+#include <mma_config.h>
 #include <mma/mma.h>
 
 #include <assert.h>
@@ -7,9 +8,8 @@
 
 #include "string_list.h"
 
-#if defined(_WIN32)
-#include <Windows.h>
-#else
+#if defined(HAVE_WINDOWS_H)
+#include <windows.h>
 #endif
 
 static int world_rank = MPI_PROC_NULL;
@@ -203,7 +203,7 @@ static int mma_get_id_(int* exe_id) {
 
 static int mma_get_name_(const char** name) {
     int ierror = 0;
-#if defined(_WIN32)
+#if defined(HAVE_WINDOWS_H)
     char __progname[MAX_PATH];
     GetModuleFileName(NULL, __progname, MAX_PATH);
 #else
