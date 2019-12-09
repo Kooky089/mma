@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
-project(mma VERSION 0.1.0 LANGUAGES C)
+set(MMA_VER 0.1.0)
+set(MMA_SO_VER 1)
+project(mma VERSION ${MMA_VER} LANGUAGES C)
 
 include(CheckLanguage)
 check_language(Fortran)

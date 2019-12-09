@@ -1,7 +1,7 @@
 add_executable(test01 test01.c)
 target_link_libraries(test01 PRIVATE mma)
 
-if(WIN32)
+if(WIN32 OR CYGWIN)
   add_custom_command(
           TARGET test01 POST_BUILD
           COMMAND "${CMAKE_COMMAND}" -E copy_if_different

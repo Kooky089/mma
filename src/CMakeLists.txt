@@ -14,6 +14,8 @@ target_include_directories(mma PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 target_include_directories(mma PUBLIC "${MPI_INCLUDE}")
 target_link_libraries(mma PUBLIC "${MPI_LIB}")
 
+set_target_properties(mma PROPERTIES VERSION ${MMA_VER} SOVERSION ${MMA_SO_VER})
+
 include(CheckIncludeFiles)
 check_include_files("windows.h" HAVE_WINDOWS_H)
 
