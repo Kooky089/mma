@@ -1,17 +1,11 @@
-default:
-  image: ubuntu
-  
 build:
-  before_script:
-    - apt-get update
-    - apt-get install -y cmake g++ mpich libmpich-dev
+  tags:
+    - docker
+    - linux
+  image: jedbrown/mpich
   script:
-    - uname -a
-    - whoami
-    - ls -lisa
-    - mkdir _debug
-    - cd _debug
-    - CC=mpicc FC=mpif90 cmake -DCMAKE_BUILD_TYPE=Debug ..
-    - make
-    - make test
-    
+    - mkdir -p _build/debug
+    - cd _build/debug
+    - CC=mpicc FC=mpif90 cmake -DCMAKE_BUILD_TYPE=Debug ../..
+    - cmake --build .
+    - ctest
