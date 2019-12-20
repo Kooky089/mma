@@ -3,6 +3,8 @@ set(MMA_VER 0.1.0)
 set(MMA_SO_VER 1)
 project(mma VERSION ${MMA_VER} LANGUAGES C)
 
+include(cmi.cmake)
+
 include(CheckLanguage)
 check_language(Fortran)
 if(CMAKE_Fortran_COMPILER)
@@ -11,7 +13,6 @@ else()
   message(STATUS "No Fortran support")
 endif()
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 find_package(CMPI REQUIRED)
 
 if(${CMAKE_VERSION} VERSION_LESS "3.12.0")

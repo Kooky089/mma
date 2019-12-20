@@ -1,0 +1,40 @@
+
+if(NOT DEFINED cmakeit_POPULATED)
+  message(STATUS "cmi version 0.1")
+  set(DEPS_PATH "${CMAKE_SOURCE_DIR}/_deps/" CACHE PATH "")
+  set(cmakeit_TAG "develop")
+  set(cmakeit_PATH "${DEPS_PATH}/cmakeit-${cmakeit_TAG}" CACHE STRING "")
+  set(cmakeit_URL "https://gitlab.com/kooky089/cmakeit/-/archive/${cmakeit_TAG}/cmakeit-${cmakeit_TAG}.tar.gz" CACHE STRING "")
+  set(cmakeit_ARCHIVE "${DEPS_PATH}/cmakeit-${cmakeit_TAG}.tar.gz" CACHE STRING "")
+  
+  # Always download package at first
+  if(NOT DEFINED cmakeit_URL_CURRENT AND NOT OFFLINE)
+    set(cmakeit_URL_CURRENT "" CACHE INTERNAL "")
+  endif()
+  
+  if(NOT EXISTS "${cmakeit_PATH}")
+    set(cmakeit_ARCHIVE_CURRENT "" CACHE INTERNAL "")
+    if(NOT EXISTS "${cmakeit_ARCHIVE}")
+      if(OFFLINE)
+        message(FATAL_ERROR "cmakeit package is missing.")
+      endif()
+      set(cmakeit_URL_CURRENT "" CACHE INTERNAL "")
+    endif()
+  endif()
+  
+  if(DEFINED cmakeit_URL_CURRENT AND NOT "${cmakeit_URL}" STREQUAL "${cmakeit_URL_CURRENT}")
+    message(STATUS "Downloading cmakeit")
+    file(DOWNLOAD "${cmakeit_URL}" "${cmakeit_ARCHIVE}" SHOW_PROGRESS)
+    set(cmakeit_URL_CURRENT "${cmakeit_URL}" CACHE INTERNAL "")
+    set(cmakeit_ARCHIVE_CURRENT "" CACHE INTERNAL "")
+  endif()
+  
+  if(DEFINED cmakeit_ARCHIVE_CURRENT AND NOT "${cmakeit_ARCHIVE}" STREQUAL "${cmakeit_ARCHIVE_CURRENT}")
+    message(STATUS "Extracting cmakeit")
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xf "${cmakeit_ARCHIVE}" WORKING_DIRECTORY "${DEPS_PATH}")
+    set(cmakeit_ARCHIVE_CURRENT "${cmakeit_ARCHIVE}" CACHE INTERNAL "")
+  endif()
+  
+  set(cmakeit_POPULATED "TRUE")
+  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${cmakeit_PATH}/modules")
+endif()
