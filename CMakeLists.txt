@@ -5,6 +5,8 @@ project(mma VERSION ${MMA_VER} LANGUAGES C)
 enable_testing()
 
 include(cmi.cmake)
+load_cmi("https://gitlab.com/nordfox/cmakeit/-/archive/develop/cmakeit-develop.tar.gz")
+
 
 # Optional Fortran
 include(CheckLanguage)
