@@ -27,6 +27,11 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/package/$<CONFIG>/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/package/$<CONFIG>/bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/package/$<CONFIG>/bin)
 
+# Compiler flags
+include(cmiCompilerFlags)
+cmi_disable_vs_debug_runtime()
+
+# Projects
 add_subdirectory(src)
 add_subdirectory(examples)
 
