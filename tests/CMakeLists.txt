@@ -6,16 +6,15 @@ add_test(NAME mma.c_single COMMAND "${MPIEXEC}" -n 1 $<TARGET_FILE:mma_test01>)
 add_executable(mma_test02 test02.c)
 target_link_libraries(mma_test02 PRIVATE mma)
 
-add_custom_command(
-  TARGET mma_test02
-  POST_BUILD
-  COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:mma_test02>" "$<TARGET_FILE:mma_test02>a"
-  COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:mma_test02>" "$<TARGET_FILE:mma_test02>b"
-)
+add_executable(mma_test02a test02.c)
+target_link_libraries(mma_test02a PRIVATE mma)
+
+add_executable(mma_test02b test02.c)
+target_link_libraries(mma_test02b PRIVATE mma)
 
 add_test(
   NAME mma.c_multi
-  COMMAND "${MPIEXEC}" -n 3 $<TARGET_FILE:mma_test02> : -n 2 $<TARGET_FILE:mma_test02>a : -n 2 $<TARGET_FILE:mma_test02>b)
+  COMMAND "${MPIEXEC}" -n 3 $<TARGET_FILE:mma_test02> : -n 2 $<TARGET_FILE:mma_test02a> : -n 2 $<TARGET_FILE:mma_test02b>)
 
 if(CMAKE_Fortran_COMPILER)
   add_executable(mma_test03 mma.F90)
