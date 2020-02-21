@@ -3,7 +3,7 @@ set(MMA_VER 1.0.0)
 set(MMA_SO_VER 1)
 project(mma VERSION ${MMA_VER} LANGUAGES C)
 
-set(CMI_DOWNLOAD_TAG "103bdcbd2d52cf0993873d4a58c72cf4944d18f2")
+set(CMI_DOWNLOAD_TAG "5346dc2806e39ff86d53a28406c49d7693505dac")
 include(cmi.cmake)
 
 enable_testing()
@@ -12,7 +12,7 @@ enable_testing()
 include(CheckLanguage)
 enable_language (Fortran OPTIONAL)
 
-cmi_load_build_environment()
+cmi_set_build_environment()
 cmi_find_mpi()
 
 # Projects
