@@ -1,7 +1,10 @@
 add_executable(mma_ex01 ex1.c)
 target_link_libraries(mma_ex01 PRIVATE mma)
+cmi_set_directory(mma_ex01 IDE "examples")
 
-if (MPI_Fortran_FOUND)
-    add_executable(mma_ex02 ex2.F90)
-    target_link_libraries(mma_ex02 PUBLIC mma)
+if(MPI_Fortran_FOUND)
+  add_executable(mma_ex02 ex2.F90)
+  target_link_libraries(mma_ex02 PUBLIC mma)
+  cmi_set_directory(mma_ex02 IDE "examples")
 endif()
+

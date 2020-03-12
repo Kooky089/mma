@@ -33,3 +33,5 @@ if(${CMAKE_VERSION} VERSION_LESS "3.12.0")
 endif()
 include(GenerateExportHeader)
 generate_export_header(mma)
+
+cmi_set_directory(mma)

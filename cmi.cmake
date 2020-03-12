@@ -5,12 +5,11 @@
 
 cmake_minimum_required(VERSION 3.8)
 
-set(CMI_TAG "47dbfeedab447d1cf94a169e3898d802bebe1c9a")
+set(CMI_TAG "f8ce93f9b92ff4bc73598463bc2ea1756a6bfff3")
 
 get_property(CMI_LOADER_FILE GLOBAL PROPERTY CMI_LOADER_FILE)
 # First include
 if(NOT CMI_LOADER_FILE)
-  set_property(GLOBAL PROPERTY CMI_LOADER_FILE "${CMAKE_CURRENT_LIST_FILE}")
   # Check for updates
   if(DEFINED CMI_DOWNLOAD_TAG AND NOT ("${CMI_DOWNLOAD_TAG}" STREQUAL "${CMI_TAG}"))
     message(STATUS "Update ${CMAKE_CURRENT_LIST_FILE} to ${CMI_DOWNLOAD_TAG}")
@@ -43,17 +42,16 @@ if(NOT CMI_LOADER_FILE)
       execute_process(
         COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMI_LOADER_TMP_}" "${CMAKE_CURRENT_LIST_FILE}"
       )
-      include("${CMI_LOADER_TMP_}")
       file(REMOVE "${CMI_LOADER_TMP_}.in" "${CMI_LOADER_TMP_}")
-
+      include("${CMAKE_CURRENT_LIST_FILE}")
       unset(CMI_FILENAME_)
       unset(CMI_LOADER_TMP_)
       return()
     else()
       message(WARNING "Updating CMI failed! Using existing version.")
     endif()
-
   endif()
+  set_property(GLOBAL PROPERTY CMI_LOADER_FILE "${CMAKE_CURRENT_LIST_FILE}")
 endif()
 
 # Check if CMI is loaded at local scope
@@ -74,12 +72,6 @@ unset(CMI_LOADER_FILE)
 ######################################
 
 set(CMI_LOADED TRUE)
-
-# Enabled testing by default
-option(BUILD_TESTING "" ON)
-if(${BUILD_TESTING})
-  enable_testing()
-endif()
 
 # Consider root project as populated and included
 string(TOUPPER "${CMAKE_PROJECT_NAME}" PROJECT_NAME_UPPER_)
@@ -196,6 +188,44 @@ macro(cmi_set_new_property_ PROPERTY_NAME_ PROPERTY_VALUE_)
   endif()
 endmacro()
 
+function(cmi_add_update_script_ FILEPATH_)
+  set_property(GLOBAL APPEND PROPERTY CMI_UPDATE_LIST ${FILEPATH_})
+  get_property(TEST_ GLOBAL PROPERTY CMI_UPDATE_LIST)
+
+  set(UPDATER_ "${CMAKE_BINARY_DIR}/checkout.cmake")
+
+  file(WRITE "${UPDATER_}" "")
+  file(APPEND "${UPDATER_}" "
+    set(files \n")
+  foreach(file_ IN LISTS TEST_)
+    file(APPEND "${UPDATER_}" "      \"${file_}\"\n")
+  endforeach()
+  if(CMAKE_GENERATOR MATCHES "Visual Studio")
+    set(USE_ZERO_CHECK_ TRUE)
+  else()
+    set(USE_ZERO_CHECK_ FALSE)
+  endif()
+  file(APPEND "${UPDATER_}" "    )
+    foreach(file_ IN LISTS files)
+      execute_process(COMMAND \"${CMAKE_COMMAND}\" -P \"\${file_}\")
+      if(${USE_ZERO_CHECK_})
+        execute_process(
+          COMMAND \${CMAKE_COMMAND} --build . --target ZERO_CHECK
+        )
+      else()
+        execute_process(
+          COMMAND \${CMAKE_COMMAND} \"${CMAKE_BINARY_DIR}\"
+        )
+      endif()
+    endforeach()
+  ")
+
+  if(NOT TARGET checkout)
+    add_custom_target(checkout ${CMAKE_COMMAND} -P "${UPDATER_}")
+    set_property(TARGET checkout PROPERTY FOLDER "${CMI_IDE_EXTERNALS}")
+  endif()
+endfunction()
+
 function(cmi_add_archive PROJECT_NAME_ PROJECT_URL_)
   string(TOUPPER "${PROJECT_NAME_}" PROJECT_NAME_UPPER_)
   set(CMI_${PROJECT_NAME_UPPER_}_EXTERNAL_TYPE "archive" CACHE STRING "")
@@ -267,7 +297,9 @@ function(cmi_add_git_ PROJECT_NAME_ PROJECT_URL_ PROJECT_REV_)
 
   find_package(Git REQUIRED)
   set(${PROJECT_NAME_UPPER_}_DIR "${CMI_EXTERNALS_DIR}/${PROJECT_NAME_LOWER_}" CACHE PATH "")
-  set(UPDATER_ "${CMI_EXTERNALS_DIR}/${PROJECT_NAME_LOWER_}.update.cmake")
+  set(UPDATER_ "${CMI_EXTERNALS_DIR}/checkout.${PROJECT_NAME_LOWER_}.cmake")
+
+  cmi_add_update_script_("${UPDATER_}")
 
   # Generate copy script
   file(WRITE "${UPDATER_}" "
@@ -322,7 +354,7 @@ function(cmi_add_git_ PROJECT_NAME_ PROJECT_URL_ PROJECT_REV_)
       foreach(try RANGE 2)
         message(STATUS \"Fetch \${GIT_DIR} \${GIT_URL} \${GIT_REV}\")
         execute_process(
-          COMMAND \${GIT_EXECUTABLE} fetch \${GIT_URL}
+          COMMAND \${GIT_EXECUTABLE} fetch
           WORKING_DIRECTORY \"\${GIT_DIR}\"
           RESULT_VARIABLE RESULT_
         )
@@ -338,17 +370,6 @@ function(cmi_add_git_ PROJECT_NAME_ PROJECT_URL_ PROJECT_REV_)
       message(SEND_ERROR \"Git checkout failed.\")
     endif()
   ")
-  set(COMMAND_ ${CMAKE_COMMAND} -P "${UPDATER_}")
-  add_custom_target(checkout_${PROJECT_NAME_LOWER_} ${COMMAND_})
-  set_property(TARGET checkout_${PROJECT_NAME_LOWER_} PROPERTY FOLDER "${CMI_IDE_EXTERNALS}")
-  if(NOT TARGET checkout)
-    add_custom_target(checkout)
-    set_property(TARGET checkout PROPERTY FOLDER "${CMI_IDE_EXTERNALS}")
-  endif()
-  add_dependencies(checkout checkout_${PROJECT_NAME_LOWER_})
-  if(NOT EXISTS "${${PROJECT_NAME_UPPER_}_DIR}")
-    execute_process(COMMAND ${COMMAND_})
-  endif()
 endfunction()
 
 function(cmi_add_svn_ PROJECT_NAME_ PROJECT_URL_ PROJECT_REV_)
@@ -364,7 +385,9 @@ function(cmi_add_svn_ PROJECT_NAME_ PROJECT_URL_ PROJECT_REV_)
   set(${PROJECT_NAME_UPPER_}_DIR "${CMI_EXTERNALS_DIR}/${PROJECT_NAME_LOWER_}" CACHE PATH "")
 
 
-  set(UPDATER_ "${CMI_EXTERNALS_DIR}/${PROJECT_NAME_LOWER_}.update.cmake")
+  set(UPDATER_ "${CMI_EXTERNALS_DIR}/checkout.${PROJECT_NAME_LOWER_}.cmake")
+
+  cmi_add_update_script_("${UPDATER_}")
 
   # Generate copy script
   file(WRITE "${UPDATER_}" "
@@ -409,18 +432,6 @@ function(cmi_add_svn_ PROJECT_NAME_ PROJECT_URL_ PROJECT_REV_)
       endforeach()
     endif()
   ")
-
-  set(COMMAND_ ${CMAKE_COMMAND} -P "${UPDATER_}")
-  add_custom_target(checkout_${PROJECT_NAME_LOWER_} ${COMMAND_})
-  set_property(TARGET checkout_${PROJECT_NAME_LOWER_} PROPERTY FOLDER "${CMI_IDE_EXTERNALS}")
-  if(NOT TARGET checkout)
-    add_custom_target(checkout)
-    set_property(TARGET checkout PROPERTY FOLDER "${CMI_IDE_EXTERNALS}")
-  endif()
-  add_dependencies(checkout checkout_${PROJECT_NAME_LOWER_})
-  if(NOT EXISTS "${${PROJECT_NAME_UPPER_}_DIR}")
-    execute_process(COMMAND ${COMMAND_})
-  endif()
 endfunction()
 
 
@@ -447,6 +458,12 @@ macro(cmi_set_build_environment)
   mark_as_advanced(CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 
   set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "${CMI_IDE_PRESETS}")
+
+  # Enabled testing by default
+  option(BUILD_TESTING "" ON)
+  if(BUILD_TESTING)
+    enable_testing()
+  endif()
 
   # Set a default build type if none was specified
   set(DEFAULT_BUILD_TYPE_ "Release")
@@ -634,7 +651,7 @@ function(cmi_add_external_library LIB_NAME_ LIB_SOURCE_ LIB_DESTINATION_)
   add_custom_target(${LIB_NAME_}_import COMMAND ${CMAKE_COMMAND} -P "${SCRIPT_FILE_}")
 
   # Generate interface target
-  add_library(${LIB_NAME_} INTERFACE IMPORTED GLOBAL)
+  add_library(${LIB_NAME_} INTERFACE)
   target_link_libraries(${LIB_NAME_} INTERFACE "${LIB_DESTINATION_}/${LIB_SOURCE_NAME}")
   add_dependencies(${LIB_NAME_} ${LIB_NAME_}_import)
   cmi_set_directory(${LIB_NAME_}_import IDE "imports")
