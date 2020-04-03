@@ -5,7 +5,7 @@
 
 cmake_minimum_required(VERSION 3.8)
 
-set(CMI_TAG "953a65590860ec995776f8bbccdfa23470de2291")
+set(CMI_TAG "8bedd7a3e045df50a533072fb091be053563c42a")
 
 get_property(CMI_LOADER_FILE GLOBAL PROPERTY CMI_LOADER_FILE)
 # First include
@@ -736,6 +736,7 @@ macro(cmi_find_mpi)
 
   unset(CMI_MPI_VENDORS)
 
+  # Intel MPI
   if(NOT DEFINED I_MPI_ROOT)
     set(I_MPI_ROOT "$ENV{I_MPI_ROOT}")
   else()
@@ -749,8 +750,14 @@ macro(cmi_find_mpi)
     list(APPEND CMI_MPI_VENDORS "INTEL")
   endif()
 
-  list(LENGTH CMI_MPI_VENDORS CMI_MPI_VENDORS_COUNT)
 
+  # Wrapper MPI (dummy)
+  set(MPI_WRAPPER_INCLUDE "")
+  set(MPI_WRAPPER_LIB "")
+  set(MPI_WRAPPER_EXEC "")
+
+
+  list(LENGTH CMI_MPI_VENDORS CMI_MPI_VENDORS_COUNT)
   list(GET CMI_MPI_VENDORS 0 MPI_VENDOR)
 
   file(TO_CMAKE_PATH "${MPI_${MPI_VENDOR}_INCLUDE}" CMI_MPI_INCLUDE)
@@ -763,14 +770,24 @@ macro(cmi_find_mpi)
         add_library(cmi_MPI_${LANG} INTERFACE)
         set_property(TARGET cmi_MPI_${LANG} PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${CMI_MPI_INCLUDE}")
         set_property(TARGET cmi_MPI_${LANG} PROPERTY INTERFACE_LINK_LIBRARIES "${CMI_MPI_LIB}")
+
+        # execute check
         add_library(cmi::MPI_${LANG} ALIAS cmi_MPI_${LANG})
       endif()
     endif()
   endforeach()
-  set(MPIEXEC ${CMI_MPI_EXEC} CACHE INTERNAL "")
 
-  add_executable(cmi::MPI IMPORTED GLOBAL)
-  set_property(TARGET cmi::MPI PROPERTY IMPORTED_LOCATION "${MPIEXEC}")
+  # Set mpiexec from environment
+  if(NOT CMI_MPI_EXEC)
+    set(CMI_MPI_EXEC "$ENV{MPIEXEC}")
+  endif()
+  # Set mpiexec to default
+  if(NOT CMI_MPI_EXEC)
+    set(CMI_MPI_EXEC "mpiexec")
+  endif()
+
+  add_executable(cmi::MPIEXEC IMPORTED GLOBAL)
+  set_property(TARGET cmi::MPIEXEC PROPERTY IMPORTED_LOCATION "${CMI_MPI_EXEC}")
 
 endmacro()
 
