@@ -5,7 +5,7 @@
 
 cmake_minimum_required(VERSION 3.8)
 
-set(CMI_TAG "282a4869b253d3a52ca4a57c70124eae0af7873a")
+set(CMI_TAG "953a65590860ec995776f8bbccdfa23470de2291")
 
 get_property(CMI_LOADER_FILE GLOBAL PROPERTY CMI_LOADER_FILE)
 # First include
@@ -295,7 +295,7 @@ function(cmi_add_git_ PROJECT_NAME_ PROJECT_URL_ PROJECT_REV_)
   endif()
   set_property(GLOBAL PROPERTY ${PROJECT_NAME_UPPER_}_POPULATED "TRUE")
 
-  find_package(Git REQUIRED)
+  find_package(Git)
   set(${PROJECT_NAME_UPPER_}_DIR "${CMI_EXTERNALS_DIR}/${PROJECT_NAME_LOWER_}" CACHE PATH "")
   set(UPDATER_ "${CMI_EXTERNALS_DIR}/checkout.${PROJECT_NAME_LOWER_}.cmake")
 
@@ -384,7 +384,7 @@ function(cmi_add_svn_ PROJECT_NAME_ PROJECT_URL_ PROJECT_REV_)
   endif()
   set_property(GLOBAL PROPERTY ${PROJECT_NAME_UPPER_}_POPULATED "TRUE")
 
-  find_package(Subversion REQUIRED)
+  find_package(Subversion)
   set(${PROJECT_NAME_UPPER_}_DIR "${CMI_EXTERNALS_DIR}/${PROJECT_NAME_LOWER_}" CACHE PATH "")
 
 
@@ -409,7 +409,7 @@ function(cmi_add_svn_ PROJECT_NAME_ PROJECT_URL_ PROJECT_REV_)
           file(REMOVE_RECURSE \"\${TMP_DIR}\")
         endif()
         execute_process(
-          COMMAND \"\${SVN_EXECUTABLE}\" \"checkout\" \"\${SVN_URL}@\${SVN_REV}\" \"\${TMP_DIR}\"
+          COMMAND \"\${SVN_EXECUTABLE}\" \"checkout\" \"--ignore-externals\" \"\${SVN_URL}@\${SVN_REV}\" \"\${TMP_DIR}\"
           RESULT_VARIABLE RESULT_
         )
         if(RESULT_ STREQUAL 0)
@@ -425,7 +425,7 @@ function(cmi_add_svn_ PROJECT_NAME_ PROJECT_URL_ PROJECT_REV_)
       foreach(try RANGE 2)
         message(STATUS \"Switch \${SVN_DIR} \${SVN_URL} \${SVN_REV}\")
         execute_process(
-          COMMAND \"\${SVN_EXECUTABLE}\" \"switch\" \"\${SVN_URL}@\${SVN_REV}\" \"\${SVN_DIR}\"
+          COMMAND \"\${SVN_EXECUTABLE}\" \"switch\" \"--ignore-externals\" \"\${SVN_URL}@\${SVN_REV}\" \"\${SVN_DIR}\"
           RESULT_VARIABLE RESULT_
         )
         if(RESULT_ STREQUAL 0)
@@ -441,6 +441,132 @@ function(cmi_add_svn_ PROJECT_NAME_ PROJECT_URL_ PROJECT_REV_)
 endfunction()
 
 
+
+######################################
+# COMPILER FLAGS
+######################################
+
+function(cmi_Fortran_append var name)
+  # Compiler presets
+  set(Fortran_TRACEBACK_Generic_GNU "-fbacktrace")
+  set(Fortran_TRACEBACK_Generic_Intel "-traceback")
+  set(Fortran_TRACEBACK_Windows_Intel "/traceback")
+
+  set(Fortran_CONSISTENCY_Generic_GNU "")
+  set(Fortran_CONSISTENCY_Generic_Intel "-fimf-arch-consistency=true")
+  set(Fortran_CONSISTENCY_Windows_Intel "/Qimf-arch-consistency:true")
+
+  set(Fortran_FPP_Generic_GNU "-cpp -ffree-line-length-none -ffixed-line-length-none")
+  set(Fortran_FPP_Generic_Intel "-fpp -allow nofpp-comments")
+  set(Fortran_FPP_Windows_Intel "/fpp")
+
+  set(Fortran_FPP0_Generic_GNU "-ffpe-trap=invalid,zero,overflow")
+  set(Fortran_FPE0_Generic_Intel "-fpe0")
+  set(Fortran_FPE0_Windows_Intel "/fpe:0")
+
+  set(Fortran_FPSCOMPGENERAL_Generic_GNU "")
+  set(Fortran_FPSCOMPGENERAL_Generic_Intel "-fpscomp general")
+  set(Fortran_FPSCOMPGENERAL_Windows_Intel "/fpscomp:general")
+
+  set(Fortran_FPMODELSOURCE_Generic_GNU "")
+  set(Fortran_FPMODELSOURCE_Generic_Intel "-fp-model source")
+  set(Fortran_FPMODELSOURCE_Windows_Intel "/fp:source")
+
+  set(Fortran_FPSPECULATIONSAFE_Generic_GNU "")
+  set(Fortran_FPSPECULATIONSAFE_Generic_Intel "-fp-speculation safe")
+  set(Fortran_FPSPECULATIONSAFE_Windows_Intel "/Qfp-speculation=safe")
+
+  set(Fortran_OMP_Generic_GNU "-fopenmp")
+  set(Fortran_OMP_Generic_Intel "-qopenmp")
+  set(Fortran_OMP_Windows_Intel "/Qopenmp")
+
+  set(Fortran_TRAPUV_Generic_GNU "-finit-real=snan -finit-integer=-1 -finit-character=0 -finit-logical=false")
+  set(Fortran_TRAPUV_Generic_Intel "-ftrapuv")
+  set(Fortran_TRAPUV_Windows_Intel "/Qtrapuv")
+
+  set(Fortran_WSRCTRUNC_Generic_GNU "-Wline-truncation")
+  set(Fortran_WSRCTRUNC_Generic_Intel "-warn truncated_source")
+  set(Fortran_WSRCTRUNC_Windows_Intel "/warn:truncated_source")
+
+  set(Fortran_CHECKALL_Generic_GNU "-fcheck=pointer,bounds")
+  set(Fortran_CHECKALL_Generic_Intel "-check pointer,bounds,uninit,format,output_conversion")
+  set(Fortran_CHECKALL_Windows_Intel "/check:pointer /check:bounds /check:uninit /check:format /check:output_conversion")
+
+  set(Fortran_THREADS_Generic_GNU "-pthread")
+  set(Fortran_THREADS_Generic_Intel "-threads")
+  set(Fortran_THREADS_Windows_Intel "/threads")
+
+  set(Fortran_STACK_Generic_GNU "")
+  set(Fortran_STACK_Generic_Intel "")
+  set(Fortran_STACK_Windows_Intel "/STACK:10000000,10000000")
+
+  if(NOT MSVC)
+    set(CMAKE_SYSTEM_NAME Generic)
+  endif()
+
+  set(${var} "${${var}} ${Fortran_${name}_${CMAKE_SYSTEM_NAME}_${CMAKE_Fortran_COMPILER_ID}}" PARENT_SCOPE)
+  string(STRIP "${${var}}" ${var})
+endfunction()
+
+function(cmi_fortran_default_mangling)
+  set(flag "/names:lowercase /assume:underscore")
+  if(MSVC)
+    string(FIND "${CMAKE_Fortran_FLAGS}" "${flag}" status)
+    if("${status}" STREQUAL "-1")
+      set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${flag}" PARENT_SCOPE)
+    endif()
+  endif()
+endfunction()
+
+macro(cmi_disable_vs_incremental_linker_ FLAG_)
+  if(DEFINED ${FLAG_})
+    string(REGEX REPLACE "/INCREMENTAL(:YES)? " "/INCREMENTAL:NO " ${FLAG_} "${${FLAG_}} ")
+    string(STRIP ${${FLAG_}} ${FLAG_})
+    set(${FLAG_} ${${FLAG_}} CACHE STRING "" FORCE)
+  endif()
+endmacro()
+
+function(cmi_disable_vs_incremental_linker)
+  if(MSVC)
+    foreach(CONFIGURATION IN LISTS CMAKE_CONFIGURATION_TYPES)
+      string(TOUPPER ${CONFIGURATION} CONFIGURATION)
+      cmi_disable_vs_incremental_linker_(CMAKE_EXE_LINKER_FLAGS_${CONFIGURATION})
+      cmi_disable_vs_incremental_linker_(CMAKE_SHARED_LINKER_FLAGS_${CONFIGURATION})
+      cmi_disable_vs_incremental_linker_(CMAKE_MODULE_LINKER_FLAGS_${CONFIGURATION})
+    endforeach()
+  endif()
+endfunction()
+
+function(cmi_disable_vs_debug_runtime)
+  if(MSVC)
+    set(LANGUAGES "C" "CXX" "Fortran")
+    foreach(LANGUAGE IN LISTS LANGUAGES)
+      set(TARGET_FLAG "CMAKE_${LANGUAGE}_FLAGS_DEBUG")
+      if(DEFINED ${TARGET_FLAG})
+        set(FLAGS "${${TARGET_FLAG}}")
+        string(REPLACE "/dbglibs " " " FLAGS "${FLAGS} ")
+        string(REPLACE "/MDd " "/MD " FLAGS "${FLAGS} ")
+        string(REPLACE "/MTd " "/MT " FLAGS "${FLAGS} ")
+        string(STRIP ${FLAGS} FLAGS)
+        set(${TARGET_FLAG} "${FLAGS}" CACHE STRING "" FORCE)
+      endif()
+    endforeach()
+  endif()
+endfunction()
+
+function(cmi_mingw_allow_multiple_defintion)
+  if(DEFINED CMAKE_Fortran_COMPILER_ID AND CMAKE_SYSTEM_NAME STREQUAL "Windows" AND CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+    cmi_Fortran_append(FLAG_ MULTIPLEDEFINITION)
+    if(DEFINED CMAKE_Fortran_FLAGS)
+      string(FIND "${CMAKE_Fortran_FLAGS}" "${FLAG_}" STATUS_)
+      if("${STATUS_}" STREQUAL "-1")
+        set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${FLAG_}" PARENT_SCOPE)
+      endif()
+    endif()
+  endif()
+endfunction()
+
+
 ######################################
 # BUILD SETTINGS
 ######################################
@@ -451,6 +577,11 @@ macro(cmi_load_build_environment)
   cmi_set_build_environment(${ARGV})
 endmacro()
 macro(cmi_set_build_environment)
+  if(POLICY CMP0068)
+    cmake_policy(SET CMP0068 NEW)
+  endif()
+
+
   set(CMI_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/package/$<CONFIG>" CACHE PATH "")
   set(CMI_BINARAY_OUTPUT_DIRECTORY "${CMI_OUTPUT_DIRECTORY}/bin" CACHE PATH "")
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMI_BINARAY_OUTPUT_DIRECTORY}" CACHE INTERNAL "")
@@ -483,9 +614,9 @@ macro(cmi_set_build_environment)
   endif()
   unset(DEFAULT_BUILD_TYPE_)
 
+  cmi_disable_vs_incremental_linker()
   cmi_disable_vs_debug_runtime()
   cmi_fortran_default_mangling()
-  #cmi_mingw_allow_multiple_defintion()
 endmacro()
 
 function(cmi_set_directory TARGET_)
@@ -501,7 +632,13 @@ function(cmi_set_directory TARGET_)
   file(RELATIVE_PATH PATH_TO_BIN "${_OUTPUT}" "${BINARY_DIR}")
   if(TARGET ${TARGET_})
     set_property(TARGET ${TARGET_} PROPERTY BUILD_WITH_INSTALL_RPATH TRUE)
-    set_property(TARGET ${TARGET_} PROPERTY INSTALL_RPATH "$ORIGIN/${PATH_TO_BIN}")
+
+    if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+      set_property(TARGET ${TARGET_} PROPERTY INSTALL_RPATH "@loader_path/${PATH_TO_BIN}")
+    else()
+      set_property(TARGET ${TARGET_} PROPERTY INSTALL_RPATH "$ORIGIN/${PATH_TO_BIN}")
+    endif()
+
     set_property(TARGET ${TARGET_} PROPERTY ARCHIVE_OUTPUT_DIRECTORY "${_OUTPUT}")
     set_property(TARGET ${TARGET_} PROPERTY LIBRARY_OUTPUT_DIRECTORY "${_OUTPUT}")
     set_property(TARGET ${TARGET_} PROPERTY RUNTIME_OUTPUT_DIRECTORY "${_OUTPUT}")
@@ -522,135 +659,7 @@ function(cmi_copy TARGET_ SOURCE_ DESTINATION_)
 endfunction()
 
 
-######################################
-# COMPILER FLAGS
-######################################
 
-function(cmi_Fortran_append var name)
-  # Compiler presets
-  set(Fortran_TRACEBACK_Linux_GNU "-fbacktrace")
-  set(Fortran_TRACEBACK_CYGWIN_GNU "-fbacktrace")
-  set(Fortran_TRACEBACK_Windows_GNU "-fbacktrace")
-  set(Fortran_TRACEBACK_Linux_Intel "-traceback")
-  set(Fortran_TRACEBACK_Windows_Intel "/traceback")
-
-  set(Fortran_CONSISTENCY_Linux_GNU "")
-  set(Fortran_CONSISTENCY_CYGWIN_GNU "")
-  set(Fortran_CONSISTENCY_Windows_GNU "")
-  set(Fortran_CONSISTENCY_Linux_Intel "-fimf-arch-consistency=true")
-  set(Fortran_CONSISTENCY_Windows_Intel "/Qimf-arch-consistency:true")
-
-  set(Fortran_FPP_Linux_GNU "-cpp -ffree-line-length-none -ffixed-line-length-none")
-  set(Fortran_FPP_CYGWIN_GNU "-cpp -ffree-line-length-none -ffixed-line-length-none")
-  set(Fortran_FPP_Windows_GNU "-cpp -ffree-line-length-none -ffixed-line-length-none")
-  set(Fortran_FPP_Linux_Intel "-fpp -allow nofpp-comments")
-  set(Fortran_FPP_Windows_Intel "/fpp")
-
-  set(Fortran_FPE0_Linux_GNU "-ffpe-trap=invalid,zero,overflow")
-  set(Fortran_FPP0_CYGWIN_GNU "-ffpe-trap=invalid,zero,overflow")
-  set(Fortran_FPP0_Windows_GNU "-ffpe-trap=invalid,zero,overflow")
-  set(Fortran_FPE0_Linux_Intel "-fpe0")
-  set(Fortran_FPE0_Windows_Intel "/fpe:0")
-
-  set(Fortran_FPSCOMPGENERAL_Linux_GNU "")
-  set(Fortran_FPSCOMPGENERAL_CYGWIN_GNU "")
-  set(Fortran_FPSCOMPGENERAL_Windows_GNU "")
-  set(Fortran_FPSCOMPGENERAL_Linux_Intel "-fpscomp general")
-  set(Fortran_FPSCOMPGENERAL_Windows_Intel "/fpscomp:general")
-
-  set(Fortran_FPMODELSOURCE_Linux_GNU "")
-  set(Fortran_FPMODELSOURCE_CYGWIN_GNU "")
-  set(Fortran_FPMODELSOURCE_Windows_GNU "")
-  set(Fortran_FPMODELSOURCE_Linux_Intel "-fp-model source")
-  set(Fortran_FPMODELSOURCE_Windows_Intel "/fp:source")
-
-  set(Fortran_FPSPECULATIONSAFE_Linux_GNU "")
-  set(Fortran_FPSPECULATIONSAFE_CYGWIN_GNU "")
-  set(Fortran_FPSPECULATIONSAFE_Windows_GNU "")
-  set(Fortran_FPSPECULATIONSAFE_Linux_Intel "-fp-speculation safe")
-  set(Fortran_FPSPECULATIONSAFE_Windows_Intel "/Qfp-speculation=safe")
-
-  set(Fortran_OMP_Linux_GNU "-fopenmp")
-  set(Fortran_OMP_CYGWIN_GNU "-fopenmp")
-  set(Fortran_OMP_Windows_GNU "-fopenmp")
-  set(Fortran_OMP_Linux_Intel "-qopenmp")
-  set(Fortran_OMP_Windows_Intel "/Qopenmp")
-
-  set(Fortran_TRAPUV_Linux_GNU "-finit-real=snan -finit-integer=-1 -finit-character=0 -finit-logical=false")
-  set(Fortran_TRAPUV_CYGWIN_GNU "-finit-real=snan -finit-integer=-1 -finit-character=0 -finit-logical=false")
-  set(Fortran_TRAPUV_Windows_GNU "-finit-real=snan -finit-integer=-1 -finit-character=0 -finit-logical=false")
-  set(Fortran_TRAPUV_Linux_Intel "-ftrapuv")
-  set(Fortran_TRAPUV_Windows_Intel "/Qtrapuv")
-
-  set(Fortran_WSRCTRUNC_Linux_GNU "-Wline-truncation")
-  set(Fortran_WSRCTRUNC_CYGWIN_GNU "-Wline-truncation")
-  set(Fortran_WSRCTRUNC_Windows_GNU "-Wline-truncation")
-  set(Fortran_WSRCTRUNC_Linux_Intel "-warn truncated_source")
-  set(Fortran_WSRCTRUNC_Windows_Intel "/warn:truncated_source")
-
-  set(Fortran_CHECKALL_Linux_GNU "-fcheck=pointer,bounds")
-  set(Fortran_CHECKALL_CYGWIN_GNU "-fcheck=pointer,bounds")
-  set(Fortran_CHECKALL_Windows_GNU "-fcheck=pointer,bounds")
-  set(Fortran_CHECKALL_Linux_Intel "-check pointer,bounds,uninit,format,output_conversion")
-  set(Fortran_CHECKALL_Windows_Intel "/check:pointer /check:bounds /check:uninit /check:format /check:output_conversion")
-
-  set(Fortran_THREADS_Linux_GNU "-pthread")
-  set(Fortran_THREADS_CYGWIN_GNU "-pthread")
-  set(Fortran_THREADS_Windows_GNU "-pthread")
-  set(Fortran_THREADS_Linux_Intel "-threads")
-  set(Fortran_THREADS_Windows_Intel "/threads")
-
-  set(Fortran_STACK_Linux_GNU "")
-  set(Fortran_STACK_CYGWIN_GNU "")
-  set(Fortran_STACK_Windows_GNU "")
-  set(Fortran_STACK_Linux_Intel "")
-  set(Fortran_STACK_Windows_Intel "/STACK:10000000,10000000")
-
-  set(Fortran_MULTIPLEDEFINITION_Linux_GNU "")
-  set(Fortran_MULTIPLEDEFINITION_CYGWIN_GNU "")
-  set(Fortran_MULTIPLEDEFINITION_Windows_GNU "-Wl,--allow-multiple-definition")
-  set(Fortran_MULTIPLEDEFINITION_Linux_Intel "")
-  set(Fortran_MULTIPLEDEFINITION_Windows_Intel "")
-
-  set(${var} "${${var}} ${Fortran_${name}_${CMAKE_SYSTEM_NAME}_${CMAKE_Fortran_COMPILER_ID}}" PARENT_SCOPE)
-  string(STRIP "${${var}}" ${var})
-endfunction()
-
-function(cmi_fortran_default_mangling)
-  set(flag "/names:lowercase /assume:underscore")
-  if(MSVC)
-    string(FIND "${CMAKE_Fortran_FLAGS}" "${flag}" status)
-    if("${status}" STREQUAL "-1")
-      set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${flag}" PARENT_SCOPE)
-    endif()
-  endif()
-endfunction()
-
-function(cmi_disable_vs_debug_runtime)
-  set(LANGUAGES "C" "CXX" "Fortran")
-  foreach(LANGUAGE IN LISTS LANGUAGES)
-    set(TARGET_FLAG "CMAKE_${LANGUAGE}_FLAGS_DEBUG")
-    if(DEFINED ${TARGET_FLAG})
-      set(FLAGS "${${TARGET_FLAG}}")
-      string(REPLACE "/dbglibs" "" FLAGS "${FLAGS}")
-      string(REPLACE "/MDd" "/MD" FLAGS "${FLAGS}")
-      string(REPLACE "/MTd" "/MT" FLAGS "${FLAGS}")
-      set(${TARGET_FLAG} "${FLAGS}" PARENT_SCOPE)
-    endif()
-  endforeach()
-endfunction()
-
-function(cmi_mingw_allow_multiple_defintion)
-  if(DEFINED CMAKE_Fortran_COMPILER_ID AND CMAKE_SYSTEM_NAME STREQUAL "Windows" AND CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
-    cmi_Fortran_append(FLAG_ MULTIPLEDEFINITION)
-    if(DEFINED CMAKE_Fortran_FLAGS)
-      string(FIND "${CMAKE_Fortran_FLAGS}" "${FLAG_}" STATUS_)
-      if("${STATUS_}" STREQUAL "-1")
-        set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${FLAG_}" PARENT_SCOPE)
-      endif()
-    endif()
-  endif()
-endfunction()
 
 ######################################
 # IMPORT
@@ -694,6 +703,22 @@ function(cmi_add_external_library LIB_NAME_ LIB_SOURCE_ LIB_DESTINATION_)
   cmi_set_directory(${LIB_NAME_}_import IDE "imports")
 endfunction()
 
+macro(cmi_include HEADER)
+  if("${HEADER}" STREQUAL "GenerateExportHeader")
+    # Generate export header
+    if(${CMAKE_VERSION} VERSION_LESS "3.12.0" AND NOT CMAKE_CXX_COMPILER)
+      message("Workaround for CMAKE < 3.12. Enabling CXX")
+      message("See: https://gitlab.kitware.com/cmake/cmake/merge_requests/1799")
+      check_language(CXX)
+      if(CMAKE_CXX_COMPILER)
+        enable_language(CXX)
+      else()
+        message(FATAL_ERROR "No CXX support")
+      endif()
+    endif()
+  endif()
+  include(${HEADER})
+endmacro()
 
 ######################################
 # FIND
@@ -704,148 +729,48 @@ endfunction()
 # Usage(Windows/Linux):
 # target_include_directories(mytarget PUBLIC "${MPI_INCLUDE}")
 # target_link_libraries(mytarget PUBLIC "${MPI_LIB}")
+
+
 # Setting up MPI
 macro(cmi_find_mpi)
-  if(MSVC)
-    # Don't use FindMPI when using MS Visual Studio
-    foreach(COMPILER_ IN ITEMS C CXX Fortran)
-      if(DEFINED CMAKE_${COMPILER_}_COMPILER)
-        if(MPI_${COMPILER_}_FOUND)
-          set(MPI_FOUND TRUE CACHE INTERNAL "")
-        else()
-          set(MPI_FOUND FALSE CACHE INTERNAL "")
-          break()
-        endif()
-      endif()
-    endforeach()
-    unset(COMPILER_)
 
-    if(NOT MPI_FOUND)
+  unset(CMI_MPI_VENDORS)
 
-      if(NOT DEFINED I_MPI_ROOT)
-        set(CMPI_ROOT "$ENV{I_MPI_ROOT}")
-      else()
-        set(CMPI_ROOT "${I_MPI_ROOT}")
-      endif()
-
-      if(NOT EXISTS "${CMPI_ROOT}")
-        message(STATUS " Folder does NOT exist: I_MPI_ROOT=${CMPI_ROOT}")
-      else()
-        set(MPI_INCLUDE "${CMPI_ROOT}/intel64/include" CACHE PATH "")
-        set(MPI_LIB "${CMPI_ROOT}/intel64/lib/release/impi.lib" CACHE PATH "")
-        set(MPIEXEC "${CMPI_ROOT}/intel64/bin/mpiexec.exe" CACHE PATH "")
-        mark_as_advanced(MPI_LIB)
-        mark_as_advanced(MPI_INCLUDE)
-        message(STATUS " I_MPI_ROOT: " "${CMPI_ROOT}")
-
-        if(NOT EXISTS "${MPI_INCLUDE}")
-          message(STATUS " MPI_INCLUDE path does NOT exist: ${MPI_INCLUDE}")
-        else()
-          message(STATUS " MPI_INCLUDE: ${MPI_INCLUDE}")
-
-          if(NOT EXISTS "${MPI_LIB}")
-            message(STATUS " MPI_LIB path does not exist: ${MPI_LIB}")
-          else()
-            message(STATUS " MPI_LIB: ${MPI_LIB}")
-
-            if(NOT EXISTS "${MPIEXEC}")
-              message(STATUS " MPIEXEC does not exist: ${MPIEXEC}")
-            else()
-              message(STATUS " MPIEXEC: ${MPIEXEC}")
-
-              # Check C and CXX
-              if(CMAKE_C_COMPILER OR CMAKE_CXX_COMPILER)
-                if(NOT EXISTS "${MPI_INCLUDE}/mpi.h")
-                  message(STATUS " Could NOT find mpi.h file in: ${MPI_INCLUDE}")
-                else()
-                  if(CMAKE_C_COMPILER)
-                    set(MPI_C_FOUND TRUE CACHE INTERNAL "")
-                  endif()
-                  if(CMAKE_CXX_COMPILER)
-                    set(MPI_CXX_FOUND TRUE CACHE INTERNAL "")
-                  endif()
-                endif()
-              endif()
-
-              # Check Fortran
-              if(CMAKE_Fortran_COMPILER)
-                if(NOT EXISTS "${MPI_INCLUDE}/mpif.h")
-                  message(STATUS " Could NOT find mpif.h file in: ${MPI_INCLUDE}")
-                else()
-                  if(CMAKE_Fortran_COMPILER)
-                    set(MPI_Fortran_FOUND TRUE CACHE INTERNAL "")
-                  endif()
-                endif()
-              endif()
-
-            endif()
-          endif()
-        endif()
-
-      endif()
-
-      foreach(COMPILER_ IN ITEMS C CXX Fortran)
-        if(DEFINED CMAKE_${COMPILER_}_COMPILER)
-          if(MPI_${COMPILER_}_FOUND)
-            set(MPI_FOUND TRUE CACHE INTERNAL "")
-          else()
-            set(MPI_FOUND FALSE CACHE INTERNAL "")
-            message("Missing ${COMPILER_}")
-            break()
-          endif()
-        endif()
-      endforeach()
-      unset(COMPILER_)
-
-      if(DEFINED MPI_FOUND AND NOT MPI_FOUND)
-        message(WARNING " Make sure that IntelMPI SDK is installed and env var I_MPI_ROOT points to it. For example:\n"
-                        " I_MPI_ROOT=C:\\Program Files(x86)\\IntelSWTools\\compilers_and_libraries_2019.5.281\\windows\\mpi\\\n")
-      endif()
-    endif()
+  if(NOT DEFINED I_MPI_ROOT)
+    set(I_MPI_ROOT "$ENV{I_MPI_ROOT}")
   else()
-    if(DEFINED CMAKE_C_COMPILER)
-      set(MPI_C_COMPILER ${CMAKE_C_COMPILER} CACHE FILEPATH "")
-    endif()
-    if(DEFINED CMAKE_CXX_COMPILER)
-      set(MPI_CXX_COMPILER ${CMAKE_CXX_COMPILER} CACHE FILEPATH "")
-    endif()
-    if(DEFINED CMAKE_Fortran_COMPILER)
-      set(MPI_Fortran_COMPILER ${CMAKE_Fortran_COMPILER} CACHE FILEPATH "")
-    endif()
+    set(I_MPI_ROOT "${I_MPI_ROOT}")
+  endif()
+  set(MPI_INTEL_INCLUDE "${I_MPI_ROOT}/intel64/include")
+  set(MPI_INTEL_LIB "${I_MPI_ROOT}/intel64/lib/release/impi.lib")
+  set(MPI_INTEL_EXEC "${I_MPI_ROOT}/intel64/bin/mpiexec")
 
-    find_package(MPI)
-    if(CMAKE_C_COMPILER)
-      if(NOT MPI_C_FOUND)
-        message(STATUS "C compiler ${CMAKE_C_COMPILER} has NO MPI support.\nTo enable support, provide MPI compiler wrapper explicitly e.g. 'CC=mpicc cmake', delete cache and rerun cmake.")
-      endif()
-    endif()
-    if(CMAKE_CXX_COMPILER)
-      if(NOT MPI_CXX_FOUND)
-        message(STATUS "CXX compiler ${CMAKE_CXX_COMPILER} has NO MPI support.\nTo enable support, provide MPI compiler wrapper explicitly e.g. 'CXX=mpicxx cmake', delete cache and rerun cmake.")
-      endif()
-    endif()
-    if(CMAKE_Fortran_COMPILER)
-      if(NOT MPI_Fortran_FOUND)
-        message(STATUS "Fortran compiler ${CMAKE_Fortran_COMPILER} has NO MPI support.\nTo enable support, provide MPI compiler warpper explicitly e.g. 'FC=mpifc cmake', delete cache and rerun cmake.")
-      endif()
-    endif()
-    set(MPI_INCLUDE "" CACHE PATH "")
-    set(MPI_LIB "" CACHE PATH "")
+  if(EXISTS "${MPI_INTEL_INCLUDE}" AND EXISTS "${MPI_INTEL_LIB}" AND NOT CYGWIN)
+    list(APPEND CMI_MPI_VENDORS "INTEL")
   endif()
 
-  foreach(COMPILER_ IN ITEMS C CXX Fortran)
-    set(CMPI_${COMPILER_}_FOUND ${MPI_${COMPILER_}_FOUND})
-    if(MPI_${COMPILER_}_FOUND)
-      set(MPI_FOUND TRUE)
+  list(LENGTH CMI_MPI_VENDORS CMI_MPI_VENDORS_COUNT)
+
+  list(GET CMI_MPI_VENDORS 0 MPI_VENDOR)
+
+  file(TO_CMAKE_PATH "${MPI_${MPI_VENDOR}_INCLUDE}" CMI_MPI_INCLUDE)
+  file(TO_CMAKE_PATH "${MPI_${MPI_VENDOR}_LIB}" CMI_MPI_LIB)
+  file(TO_CMAKE_PATH "${MPI_${MPI_VENDOR}_EXEC}" CMI_MPI_EXEC)
+
+  foreach(LANG IN ITEMS C CXX Fortran)
+    if(DEFINED CMAKE_${LANG}_COMPILER)
+      if(NOT TARGET cmi_MPI_${LANG})
+        add_library(cmi_MPI_${LANG} INTERFACE)
+        set_property(TARGET cmi_MPI_${LANG} PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${CMI_MPI_INCLUDE}")
+        set_property(TARGET cmi_MPI_${LANG} PROPERTY INTERFACE_LINK_LIBRARIES "${CMI_MPI_LIB}")
+        add_library(cmi::MPI_${LANG} ALIAS cmi_MPI_${LANG})
+      endif()
     endif()
   endforeach()
-  unset(COMPILER_)
+  set(MPIEXEC ${CMI_MPI_EXEC} CACHE INTERNAL "")
 
-  unset(CMPI_ROOT)
-  unset(CMPI_FOUND)
-  unset(CMPI_C_FOUND)
-  unset(CMPI_CXX_FOUND)
-  unset(CMPI_Fortran_FOUND)
+  add_executable(cmi::MPI IMPORTED GLOBAL)
+  set_property(TARGET cmi::MPI PROPERTY IMPORTED_LOCATION "${MPIEXEC}")
 
 endmacro()
 
