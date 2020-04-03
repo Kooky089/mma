@@ -14,7 +14,7 @@ target_link_libraries(mma_test02b PRIVATE mma)
 
 add_test(
   NAME mma.c_multi
-  COMMAND cmi::MPI -n 3 $<TARGET_FILE:mma_test02> : -n 2 $<TARGET_FILE:mma_test02a> : -n 2 $<TARGET_FILE:mma_test02b>)
+  COMMAND $<TARGET_FILE:cmi::MPI> -n 3 $<TARGET_FILE:mma_test02> : -n 2 $<TARGET_FILE:mma_test02a> : -n 2 $<TARGET_FILE:mma_test02b>)
 
 cmi_set_directory(mma_test01 IDE "tests")
 cmi_set_directory(mma_test02 IDE "tests")
