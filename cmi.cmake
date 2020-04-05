@@ -5,7 +5,7 @@
 
 cmake_minimum_required(VERSION 3.8)
 
-set(CMI_TAG "8bedd7a3e045df50a533072fb091be053563c42a")
+set(CMI_TAG "ec2ff57b1e99374ad1d5066c016b773986527dd7")
 
 get_property(CMI_LOADER_FILE GLOBAL PROPERTY CMI_LOADER_FILE)
 # First include
@@ -707,8 +707,8 @@ macro(cmi_include HEADER)
   if("${HEADER}" STREQUAL "GenerateExportHeader")
     # Generate export header
     if(${CMAKE_VERSION} VERSION_LESS "3.12.0" AND NOT CMAKE_CXX_COMPILER)
-      message("Workaround for CMAKE < 3.12. Enabling CXX")
-      message("See: https://gitlab.kitware.com/cmake/cmake/merge_requests/1799")
+      message(STATUS "Applying GenerateExportHeader workaround for CMAKE < 3.12 - Enabling CXX")
+      message(STATUS "See: https://gitlab.kitware.com/cmake/cmake/merge_requests/1799")
       check_language(CXX)
       if(CMAKE_CXX_COMPILER)
         enable_language(CXX)
@@ -731,65 +731,147 @@ endmacro()
 # target_link_libraries(mytarget PUBLIC "${MPI_LIB}")
 
 
-# Setting up MPI
-macro(cmi_find_mpi)
 
-  unset(CMI_MPI_VENDORS)
+macro(check_mpi COMPONENT RESULT)
 
-  # Intel MPI
-  if(NOT DEFINED I_MPI_ROOT)
-    set(I_MPI_ROOT "$ENV{I_MPI_ROOT}")
+  set(MPI_C_TEST_CODE_
+    "#include<mpi.h>
+      int main(int argc, char **args) {
+        MPI_Init(&argc, &args);
+        MPI_Finalize();
+        return 0;
+    }"
+  )
+  set(MPI_F77_TEST_CODE_
+    "program main
+     implicit none
+     include \"mpif.h\"
+     end program"
+  )
+  set(MPI_F90_TEST_CODE_
+    "program main
+    use mpi
+    implicit none
+    end program"
+  )
+
+  if(${COMPONENT} STREQUAL "C")
+    enable_language(C)
+    include(CheckCCompilerFlag)
+    CHECK_C_SOURCE_COMPILES("${MPI_C_TEST_CODE_}" ${RESULT})
+
+  elseif(${COMPONENT} STREQUAL "CXX")
+    enable_language(CXX)
+    include(CheckCXXCompilerFlag)
+    CHECK_CXX_SOURCE_COMPILES("${MPI_C_TEST_CODE_}" ${RESULT})
+
+  elseif(${COMPONENT} STREQUAL "F77" OR ${COMPONENT} STREQUAL "F90")
+    enable_language(Fortran)
+    include(CheckFortranCompilerFlag)
+    if(${COMPONENT} STREQUAL "F77")
+      CHECK_Fortran_SOURCE_COMPILES("${MPI_F77_TEST_CODE_}" ${RESULT} SRC_EXT F90)
+    elseif(${COMPONENT} STREQUAL "F90")
+      CHECK_Fortran_SOURCE_COMPILES("${MPI_F90_TEST_CODE_}" ${RESULT} SRC_EXT F90)
+    endif()
+
   else()
-    set(I_MPI_ROOT "${I_MPI_ROOT}")
+    set(${RESULT} 0)
   endif()
-  set(MPI_INTEL_INCLUDE "${I_MPI_ROOT}/intel64/include")
-  set(MPI_INTEL_LIB "${I_MPI_ROOT}/intel64/lib/release/impi.lib")
-  set(MPI_INTEL_EXEC "${I_MPI_ROOT}/intel64/bin/mpiexec")
+endmacro()
 
-  if(EXISTS "${MPI_INTEL_INCLUDE}" AND EXISTS "${MPI_INTEL_LIB}" AND NOT CYGWIN)
-    list(APPEND CMI_MPI_VENDORS "INTEL")
+
+# Setting up MPI
+function(cmi_find_mpi)
+  set(OPTIONS_ COMPONENTS)
+  cmake_parse_arguments("" "" "" "${OPTIONS_}" ${ARGN})
+  if(NOT DEFINED _COMPONENTS)
+    set(_COMPONENTS C CXX F77 F90)
   endif()
+  # Intel MPI
+  if(NOT I_MPI_ROOT)
+    set(I_MPI_ROOT "$ENV{I_MPI_ROOT}" CACHE PATH "")
+    if(NOT CMI_MPI_ROOT STREQUAL I_MPI_ROOT)
+      unset(CMI_MPI_MISSING)
+      foreach(COMPONENT IN ITEMS _COMPONENTS)
+        unset(MPI_$[COMPONENT}_COMPILES CACHE)
+      endforeach()
+    endif()
+  endif()
+  if(I_MPI_ROOT)
+    set(VENDOR INTEL)
 
+    # General compatibility
+    if(CYGWIN)
+      message(WARNING "MPI: Intel MPI is not compatible with Cygwin!")
+    endif()
 
-  # Wrapper MPI (dummy)
-  set(MPI_WRAPPER_INCLUDE "")
-  set(MPI_WRAPPER_LIB "")
-  set(MPI_WRAPPER_EXEC "")
+    # Handle MPI_LIB
+    set(MPI_EXEC "${I_MPI_ROOT}/intel64/bin/mpiexec")
+    find_library(MPI_LIB NAMES impi mpi PATHS "${I_MPI_ROOT}/intel64/lib/release/" NO_DEFAULT_PATH)
+    set(MPI_LIB ${MPI_LIB})
+    unset(MPI_LIB CACHE)
+    if(NOT MPI_LIB)
+      message(WARNING "MPI: Missing developer libraries. MPI SDK installed correctly?")
+    endif()
 
-
-  list(LENGTH CMI_MPI_VENDORS CMI_MPI_VENDORS_COUNT)
-  list(GET CMI_MPI_VENDORS 0 MPI_VENDOR)
-
-  file(TO_CMAKE_PATH "${MPI_${MPI_VENDOR}_INCLUDE}" CMI_MPI_INCLUDE)
-  file(TO_CMAKE_PATH "${MPI_${MPI_VENDOR}_LIB}" CMI_MPI_LIB)
-  file(TO_CMAKE_PATH "${MPI_${MPI_VENDOR}_EXEC}" CMI_MPI_EXEC)
-
-  foreach(LANG IN ITEMS C CXX Fortran)
-    if(DEFINED CMAKE_${LANG}_COMPILER)
-      if(NOT TARGET cmi_MPI_${LANG})
-        add_library(cmi_MPI_${LANG} INTERFACE)
-        set_property(TARGET cmi_MPI_${LANG} PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${CMI_MPI_INCLUDE}")
-        set_property(TARGET cmi_MPI_${LANG} PROPERTY INTERFACE_LINK_LIBRARIES "${CMI_MPI_LIB}")
-
-        # execute check
-        add_library(cmi::MPI_${LANG} ALIAS cmi_MPI_${LANG})
+    # Handle MPI_INCLUDE
+    set(MPI_INCLUDE "${I_MPI_ROOT}/intel64/include")
+    if(NOT EXISTS "${MPI_INCLUDE}")
+      message(WARNING "MPI: Missing include directoy - ${MPI_INCLUDE}")
+    else()
+      if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+        FILE(GLOB versions RELATIVE "${MPI_INCLUDE}/gfortran/" "${MPI_INCLUDE}/gfortran/*")
+        set(TARGET_VERSION "${CMAKE_Fortran_COMPILER_VERSION}")
+        foreach(version IN LISTS versions)
+          if(NOT version VERSION_GREATER TARGET_VERSION)
+            if(version VERSION_GREATER CURRENT_VERSION)
+              set(CURRENT_VERSION ${version})
+            endif()
+          endif()
+        endforeach()
+        if(CURRENT_VERSION)
+          list(INSERT MPI_INCLUDE 0 "${MPI_INCLUDE}/gfortran/${CURRENT_VERSION}")
+        endif()
       endif()
     endif()
-  endforeach()
+
+    # Handle components
+    foreach(COMPONENT IN LISTS _COMPONENTS)
+      if(NOT TARGET cmi_MPI_${COMPONENT})
+        set(CMAKE_REQUIRED_INCLUDES ${MPI_INCLUDE})
+        set(CMAKE_REQUIRED_LIBRARIES ${MPI_LIB})
+        check_mpi(${COMPONENT} MPI_${COMPONENT}_COMPILES)
+        unset(CMAKE_REQUIRED_INCLUDES)
+        unset(CMAKE_REQUIRED_LIBRARIES)
+        if(MPI_${COMPONENT}_COMPILES)
+          add_library(cmi_MPI_${COMPONENT} INTERFACE)
+          set_property(TARGET cmi_MPI_${COMPONENT} PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${MPI_INCLUDE}")
+          set_property(TARGET cmi_MPI_${COMPONENT} PROPERTY INTERFACE_LINK_LIBRARIES "${MPI_LIB}")
+          add_library(cmi::MPI_${COMPONENT} ALIAS cmi_MPI_${COMPONENT})
+        else()
+          unset(MPI_${COMPONENT}_COMPILES CACHE)
+          list(APPEND CMI_MPI_MISSING ${COMPONENT})
+        endif()
+      endif()
+    endforeach()
+    if(NOT CMI_MPI_MISSING)
+      set(CMI_MPI_ROOT "${I_MPI_ROOT}" CACHE INTERNAL "")
+    else()
+      message(SEND_ERROR "MPI: Follow components not working: ${CMI_MPI_MISSING}")
+    endif()
+  endif()
 
   # Set mpiexec from environment
-  if(NOT CMI_MPI_EXEC)
-    set(CMI_MPI_EXEC "$ENV{MPIEXEC}")
+  if(NOT MPI_EXEC)
+    set(MPI_EXEC "$ENV{MPIEXEC}")
   endif()
   # Set mpiexec to default
-  if(NOT CMI_MPI_EXEC)
-    set(CMI_MPI_EXEC "mpiexec")
+  if(NOT MPI_EXEC)
+    set(MPI_EXEC "mpiexec")
   endif()
+  set(CMI_MPIEXEC "${MPI_EXEC}" CACHE INTERNAL "")
 
-  add_executable(cmi::MPIEXEC IMPORTED GLOBAL)
-  set_property(TARGET cmi::MPIEXEC PROPERTY IMPORTED_LOCATION "${CMI_MPI_EXEC}")
-
-endmacro()
+endfunction()
 
 
 macro(cmi_find_python_interpreter_)
