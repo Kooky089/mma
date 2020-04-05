@@ -792,19 +792,19 @@ function(cmi_find_mpi)
   # Intel MPI
   if(NOT I_MPI_ROOT)
     set(I_MPI_ROOT "$ENV{I_MPI_ROOT}" CACHE PATH "")
+  endif()
+  if(I_MPI_ROOT AND CYGWIN)
+    message(STATUS "MPI: Intel MPI is not compatible with Cygwin!")
+  endif()
+
+  if(I_MPI_ROOT AND NOT CYGWIN)
+    set(VENDOR INTEL)
+
     if(NOT CMI_MPI_ROOT STREQUAL I_MPI_ROOT)
       unset(CMI_MPI_MISSING)
       foreach(COMPONENT IN ITEMS _COMPONENTS)
         unset(MPI_$[COMPONENT}_COMPILES CACHE)
       endforeach()
-    endif()
-  endif()
-  if(I_MPI_ROOT)
-    set(VENDOR INTEL)
-
-    # General compatibility
-    if(CYGWIN)
-      message(WARNING "MPI: Intel MPI is not compatible with Cygwin!")
     endif()
 
     # Handle MPI_LIB
@@ -836,7 +836,6 @@ function(cmi_find_mpi)
         endif()
       endif()
     endif()
-
   endif()
 
   # Handle components
