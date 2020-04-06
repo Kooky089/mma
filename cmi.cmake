@@ -5,7 +5,7 @@
 
 cmake_minimum_required(VERSION 3.8)
 
-set(CMI_TAG "ec2ff57b1e99374ad1d5066c016b773986527dd7")
+set(CMI_TAG "34e7114e7d964d224ab0227cb8dabed6cd024d4d")
 
 get_property(CMI_LOADER_FILE GLOBAL PROPERTY CMI_LOADER_FILE)
 # First include
@@ -85,6 +85,9 @@ set(CMI_IDE_EXTERNALS "_externals" CACHE PATH "")
 mark_as_advanced(CMI_EXTERNALS_DIR)
 mark_as_advanced(CMI_IDE_PRESETS)
 mark_as_advanced(CMI_IDE_EXTERNALS)
+
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "${CMI_IDE_PRESETS}")
 
 ######################################
 # HELPER FUNCTIONS
@@ -554,18 +557,6 @@ function(cmi_disable_vs_debug_runtime)
   endif()
 endfunction()
 
-function(cmi_mingw_allow_multiple_defintion)
-  if(DEFINED CMAKE_Fortran_COMPILER_ID AND CMAKE_SYSTEM_NAME STREQUAL "Windows" AND CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
-    cmi_Fortran_append(FLAG_ MULTIPLEDEFINITION)
-    if(DEFINED CMAKE_Fortran_FLAGS)
-      string(FIND "${CMAKE_Fortran_FLAGS}" "${FLAG_}" STATUS_)
-      if("${STATUS_}" STREQUAL "-1")
-        set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${FLAG_}" PARENT_SCOPE)
-      endif()
-    endif()
-  endif()
-endfunction()
-
 
 ######################################
 # BUILD SETTINGS
@@ -581,20 +572,23 @@ macro(cmi_set_build_environment)
     cmake_policy(SET CMP0068 NEW)
   endif()
 
-
   set(CMI_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/package/$<CONFIG>" CACHE PATH "")
   set(CMI_BINARAY_OUTPUT_DIRECTORY "${CMI_OUTPUT_DIRECTORY}/bin" CACHE PATH "")
-  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMI_BINARAY_OUTPUT_DIRECTORY}" CACHE INTERNAL "")
-  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMI_BINARAY_OUTPUT_DIRECTORY}" CACHE INTERNAL "")
-  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMI_BINARAY_OUTPUT_DIRECTORY}" CACHE INTERNAL "")
-
   mark_as_advanced(CMI_OUTPUT_DIRECTORY)
   mark_as_advanced(CMI_BINARAY_OUTPUT_DIRECTORY)
-  mark_as_advanced(CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-  mark_as_advanced(CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-  mark_as_advanced(CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 
-  set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "${CMI_IDE_PRESETS}")
+  # Predefined target properties
+  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMI_BINARAY_OUTPUT_DIRECTORY}")
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMI_BINARAY_OUTPUT_DIRECTORY}")
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMI_BINARAY_OUTPUT_DIRECTORY}")
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+  if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(CMAKE_INSTALL_RPATH "@loader_path")
+  else()
+    set(CMAKE_INSTALL_RPATH "$ORIGIN")
+  endif()
+  set(CMAKE_FOLDER "${PROJECT_NAME}")
+
 
   # Enabled testing by default
   option(BUILD_TESTING "" ON)
@@ -620,32 +614,38 @@ macro(cmi_set_build_environment)
 endmacro()
 
 function(cmi_set_directory TARGET_)
-  set(OPTIONS_ OUTPUT IDE)
+  set(OPTIONS_ "OUTPUT" "IDE")
   cmake_parse_arguments("" "" "${OPTIONS_}" "" ${ARGN})
 
-  if(NOT DEFINED _OUTPUT OR NOT IS_ABSOLUTE "${_OUTPUT}")
-    set(_OUTPUT "${CMI_BINARAY_OUTPUT_DIRECTORY}/${_OUTPUT}")
+  if(NOT TARGET ${TARGET_})
+    message(WARNING "Can not set directoy for unknown target ${TARGET_}")
+    return()
   endif()
 
-  get_filename_component(_OUTPUT "${_OUTPUT}" REALPATH)
-  get_filename_component(BINARY_DIR "${CMI_BINARAY_OUTPUT_DIRECTORY}" REALPATH)
-  file(RELATIVE_PATH PATH_TO_BIN "${_OUTPUT}" "${BINARY_DIR}")
-  if(TARGET ${TARGET_})
-    set_property(TARGET ${TARGET_} PROPERTY BUILD_WITH_INSTALL_RPATH TRUE)
-
-    if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-      set_property(TARGET ${TARGET_} PROPERTY INSTALL_RPATH "@loader_path/${PATH_TO_BIN}")
-    else()
-      set_property(TARGET ${TARGET_} PROPERTY INSTALL_RPATH "$ORIGIN/${PATH_TO_BIN}")
+  if(DEFINED _OUTPUT)
+    if(NOT IS_ABSOLUTE "${_OUTPUT}")
+      set(_OUTPUT "${CMI_BINARAY_OUTPUT_DIRECTORY}/${_OUTPUT}")
+      #get_property(_OUTPUT TARGET ${TARGET_} PROPERTY RUNTIME_OUTPUT_DIRECTORY)
     endif()
-
+    file(RELATIVE_PATH PATH_TO_BIN "${_OUTPUT}" "${CMI_BINARAY_OUTPUT_DIRECTORY}")
     set_property(TARGET ${TARGET_} PROPERTY ARCHIVE_OUTPUT_DIRECTORY "${_OUTPUT}")
     set_property(TARGET ${TARGET_} PROPERTY LIBRARY_OUTPUT_DIRECTORY "${_OUTPUT}")
     set_property(TARGET ${TARGET_} PROPERTY RUNTIME_OUTPUT_DIRECTORY "${_OUTPUT}")
-    set_property(TARGET ${TARGET_} PROPERTY FOLDER "${PROJECT_NAME}/${_IDE}")
-    set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-  else()
-    message(WARNING "Can not set directoy for unknown target ${TARGET_}")
+    set_property(TARGET ${TARGET_} PROPERTY BUILD_WITH_INSTALL_RPATH TRUE)
+    if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+      set_property(TARGET ${TARGET_} APPEND PROPERTY INSTALL_RPATH "@loader_path/${PATH_TO_BIN}")
+    else()
+      set_property(TARGET ${TARGET_} APPEND PROPERTY INSTALL_RPATH "$ORIGIN/${PATH_TO_BIN}")
+    endif()
+  endif()
+
+  if(DEFINED _IDE)
+    string(REGEX REPLACE "^/" "" _IDE_NEW ${_IDE})
+    if(_IDE_NEW STREQUAL _IDE)
+      set_property(TARGET ${TARGET_} PROPERTY FOLDER "${PROJECT_NAME}/${_IDE}")
+    else()
+      set_property(TARGET ${TARGET_} PROPERTY FOLDER "${_IDE_NEW}")
+    endif()
   endif()
 endfunction()
 
@@ -657,8 +657,6 @@ function(cmi_copy TARGET_ SOURCE_ DESTINATION_)
     COMMAND ${CMAKE_COMMAND} -DFILE_PATTERN="${SOURCE_DIRECTORY_}/${SOURCE_NAME_WE_}*" -DDESTINATION="${DESTINATION_}" -P "${CMAKE_CURRENT_LIST_DIR}/cmi_copy.txt"
   )
 endfunction()
-
-
 
 
 ######################################
