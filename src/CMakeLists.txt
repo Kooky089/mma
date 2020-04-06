@@ -11,7 +11,7 @@ add_library(mma SHARED
 
 target_include_directories(mma PUBLIC "../include")
 target_include_directories(mma PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
-target_link_libraries(mma PUBLIC cmi::MPI_C)
+target_link_libraries(mma PUBLIC CMI::MPI_C)
 set_target_properties(mma PROPERTIES VERSION ${MMA_VER} SOVERSION ${MMA_SO_VER})
 
 # Generate platform header
