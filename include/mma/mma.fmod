@@ -1,6 +1,6 @@
 module mma_private
    implicit none
-   
+
    interface
       function mma_comm_get_c(string, comm) bind(c,name="mma_comm_get")
          use, intrinsic :: iso_c_binding
@@ -20,15 +20,19 @@ module mma_private
       function mma_initialize_c() bind(c,name="mma_initialize")
          use, intrinsic :: iso_c_binding
       end function
+      function mma_set_name_c(string) bind(c,name="mma_set_name")
+         use, intrinsic :: iso_c_binding
+         character(c_char), dimension(*), intent(in) :: string
+      end function
    end interface
-   
+
 contains
 end module
 
 module mma
    use iso_c_binding
    implicit none
-   
+
    type, bind(c) :: mma_comm
       integer(c_int) :: rank
       integer(c_int) :: size
@@ -39,22 +43,22 @@ module mma
       integer(c_int) :: comm
       integer(c_int) :: sub_comm
    end type
-      
+
 contains
-   
+
    subroutine mma_comm_get(string, comm, ierror)
       use mma_private
       implicit none
       character(*), intent(in) :: string
       type(mma_comm), pointer, intent(out) :: comm
       integer(c_int), intent(out) :: ierror
-            
+
       type(c_ptr) :: comm_c
-      
+
       ierror = mma_comm_get_c(string // C_NULL_CHAR, comm_c)
       call c_f_pointer(comm_c, comm)
    end subroutine
-   
+
    subroutine mma_comm_register(string, ierror)
       use mma_private
       implicit none
@@ -62,27 +66,35 @@ contains
       integer(c_int), intent(out) :: ierror
       ierror = mma_comm_register_c(string // C_NULL_CHAR)
    end subroutine
-   
+
    subroutine mma_print(ierror)
       use mma_private
       implicit none
       integer(c_int), intent(out) :: ierror
       ierror = mma_print_c()
    end subroutine
-   
+
    subroutine mma_finalize(ierror)
       use mma_private
       implicit none
       integer(c_int), intent(out) :: ierror
       ierror = mma_finalize_c()
    end subroutine
-   
+
    subroutine mma_initialize(ierror)
       use mma_private
       implicit none
       integer(c_int), intent(out) :: ierror
       ierror = mma_initialize_c()
    end subroutine
-   
+
+   subroutine mma_set_name(string, ierror)
+      use mma_private
+      implicit none
+      character(*), intent(in) :: string
+      integer(c_int), intent(out) :: ierror
+      ierror = mma_set_name_c(string // C_NULL_CHAR)
+   end subroutine
+
 end module
 
