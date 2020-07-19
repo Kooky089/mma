@@ -1,1 +1,8 @@
-* -crlf
+/.* text=auto eol=lf
+*.yml text eol=lf
+*.c text eol=lf
+*.h text eol=lf
+*.F90 text eol=lf
+*.fmod text eol=lf
+*.txt text eol=lf
+*.md text eol=lf
