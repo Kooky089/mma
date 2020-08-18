@@ -1,11 +1,34 @@
 # BSD 2-Clause License
+#
 # Copyright (c) 2019, Volker Jacht
 # All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 # See https://gitlab.com/nordfox/cmakeit
 
 cmake_minimum_required(VERSION 3.8)
 
-set(CMI_TAG "0e65cb60b572e443cc23047c013d5e4c89305918")
+set(CMI_TAG "4f2a01ad572282ac399dea15290f4acf533acca3")
 
 get_property(CMI_LOADER_FILE GLOBAL PROPERTY CMI_LOADER_FILE)
 # First include
@@ -491,6 +514,18 @@ function(cmi_Fortran_append var name)
   set(Fortran_WSRCTRUNC_Generic_Intel "-warn truncated_source")
   set(Fortran_WSRCTRUNC_Windows_Intel "/warn:truncated_source")
 
+  set(Fortran_WUNUSED_Generic_GNU "-Wunused")
+  set(Fortran_WUNUSED_Generic_Intel "-warn unused")
+  set(Fortran_WUNUSED_Windows_Intel "/warn:unused")
+
+  set(Fortran_WINTERFACES_Generic_GNU "")
+  set(Fortran_WINTERFACES_Generic_Intel "-warn interfaces")
+  set(Fortran_WINTERFACES_Windows_Intel "/warn:interfaces")
+
+  set(Fortran_WDECLARATIONS_Generic_GNU "")
+  set(Fortran_WDECLARATIONS_Generic_Intel "-warn declarations")
+  set(Fortran_WDECLARATIONS_Windows_Intel "/warn:declarations")
+
   set(Fortran_CHECKALL_Generic_GNU "-fcheck=all")
   set(Fortran_CHECKALL_Generic_Intel "-check all,noarg_temp_created")
   set(Fortran_CHECKALL_Windows_Intel "/check:all,noarg_temp_created")
@@ -913,6 +948,8 @@ macro(cmi_find_python_development_)
     # Backwards compatibility
     find_package(PythonLibs REQUIRED)
     set(Python_INCLUDE_DIRS "${PYTHON_INCLUDE_DIRS}")
+    set(Python_LIBRARIES "${PYTHON_LIBRARIES}")
+    set(Python_LIBRARY_DIRS "${PYTHON_LIBRARY_DIRS}")
   else()
     find_package(Python REQUIRED Development)
   endif()
