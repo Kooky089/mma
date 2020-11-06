@@ -1,5 +1,5 @@
-# mma
+# MMA
 Small library to set up MPI for Multiple Applications
 
-# status
-[![Build Status](https://travis-ci.org/Kooky089/mma.svg?branch=master)](https://travis-ci.org/Kooky089/mma)
+# Status
+[![pipeline status](https://gitlab.com/nordfox/mma/badges/master/pipeline.svg)](https://gitlab.com/nordfox/mma/-/commits/master)
