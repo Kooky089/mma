@@ -1,8 +1,7 @@
 stages:
   - build
-  - test
 
-build linux:
+linux:
   stage: build
   tags:
     - docker
@@ -11,18 +10,6 @@ build linux:
   script:
     - mkdir -p _build/debug
     - cd _build/debug
-    - CC=mpicc FC=mpif90 cmake -DCMAKE_BUILD_TYPE=Debug ../..
+    - CC=mpicc FC=mpif90 cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=1 ../..
     - cmake --build .
-  artifacts:
-    paths:
-      - _build
-
-test linux:
-  stage: test
-  tags:
-    - docker
-    - linux
-  image: jedbrown/mpich
-  script:
-    - cd _build/debug
     - ctest

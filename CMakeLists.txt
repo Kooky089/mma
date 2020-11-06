@@ -3,7 +3,7 @@ set(MMA_VER 1.0.0)
 set(MMA_SO_VER 1)
 project(mma VERSION ${MMA_VER} LANGUAGES C)
 
-set(CMI_DOWNLOAD_TAG 9830c79124380fa4958a61f37807948dc48961dc)
+set(CMI_DOWNLOAD_TAG 25db80513dab4633c37ce3d77475582babc08256)
 include(cmi.cmake)
 
 # Optional Fortran
