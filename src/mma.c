@@ -1,5 +1,5 @@
-#include <mma_config.h>
 #include <mma/mma.h>
+#include <mma_config.h>
 
 #include <assert.h>
 #include <stdio.h>
@@ -36,18 +36,17 @@ static int mma_reset_() {
 int mma_set_name(const char* name) {
     assert(name);
     free(_name);
-    _name = malloc(sizeof(char) * strlen(name) + 1);
-    if (!_name) {
-        return 1;
-    }
-    memcpy(_name, name, sizeof(char) * strlen(name) + 1);
-    return 0;
+    _name = NULL;
+    return string_trim(name, &_name);
 }
 
 int mma_comm_get(const char* comm_name, struct mma_comm** comm) {
     if (comm_array_size) {
         /* check if mma_initialize() has been called */
-        int index = string_list_index_of(comm_name_list, comm_name);
+        char* comm_name_ = NULL;
+        string_trim(comm_name, &comm_name_);
+        int index = string_list_index_of(comm_name_list, comm_name_);
+        free(comm_name_);
         if (index == -1) {
             /* communicator name does not exist */
             *comm = NULL;
@@ -68,7 +67,11 @@ int mma_comm_register(const char* comm_name) {
     if (!comm_name_list) {
         string_list_create(&comm_name_list);
     }
-    return string_list_add(comm_name_list, comm_name);
+    char* comm_name_ = NULL;
+    string_trim(comm_name, &comm_name_);
+    int result = string_list_add(comm_name_list, comm_name_);
+    free(comm_name_);
+    return result;
 }
 
 int mma_print() {

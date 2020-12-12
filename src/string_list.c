@@ -1,6 +1,7 @@
 #include "string_list.h"
 
 #include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -120,4 +121,42 @@ char* string_list_get(struct string_list* list, int index) {
         current = current->next;
     }
     return NULL;
+}
+
+int string_trim(const char* string, char** trimmed_string) {
+    /* valid reference */
+    assert(string);
+    /* valid reference to unallocated string */
+    assert(trimmed_string);
+    assert(!*trimmed_string);
+
+    size_t string_length = strlen(string);
+    size_t trimmed_string_length = 0;
+    size_t start = 0;
+    size_t end = 0;
+
+    /* left trim */
+    for (size_t i = 0; i < string_length; i++) {
+        if (!isspace(string[i])) {
+            start = i;
+            break;
+        }
+    }
+
+    /* right trim */
+    for (size_t i = string_length; i > start; i--) {
+        if (!isspace(string[i - 1])) {
+            end = i;
+            break;
+        }
+    }
+
+    /* allocate and copy trimmed string */
+    trimmed_string_length = end - start;
+    *trimmed_string = malloc(sizeof(char) * (trimmed_string_length + 1));
+    if (!*trimmed_string) {
+        return 1;
+    }
+    memcpy(*trimmed_string, &string[start], sizeof(char) * trimmed_string_length);
+    (*trimmed_string)[trimmed_string_length] = '\0';
 }

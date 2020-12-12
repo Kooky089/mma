@@ -19,5 +19,6 @@ void string_list_print(struct string_list*);
 int string_list_size(struct string_list*);
 int string_list_index_of(struct string_list*, const char*);
 char* string_list_get(struct string_list*, int);
+int string_trim(const char* string, char** trimmed_string);
 
 #endif
