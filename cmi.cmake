@@ -28,7 +28,7 @@
 
 cmake_minimum_required(VERSION 3.8)
 
-set(CMI_TAG "25db80513dab4633c37ce3d77475582babc08256")
+set(CMI_TAG "a8ad577e44f7976302e8515508595e3a998ec1bb")
 
 get_property(CMI_LOADER_FILE GLOBAL PROPERTY CMI_LOADER_FILE)
 # First include
@@ -552,6 +552,10 @@ endfunction()
 
 function(cmi_Fortran_append var name)
   # Compiler presets
+  set(Fortran_DEBUGINFO_Generic_GNU "-g")
+  set(Fortran_DEBUGINFO_Generic_Intel "-g")
+  set(Fortran_DEBUGINFO_Windows_Intel "/debug:full")
+
   set(Fortran_O0_Generic_GNU "-Og")
   set(Fortran_O0_Generic_Intel "-O0")
   set(Fortran_O0_Windows_Intel "/Od")
@@ -679,6 +683,10 @@ function(cmi_Fortran_append var name)
   set(Fortran_SAVE_Generic_GNU "-fno-automatic")
   set(Fortran_SAVE_Generic_Intel "-save")
   set(Fortran_SAVE_Windows_Intel "/Qsave")
+
+  set(Fortran_STACKARRAYLIMIT65_Generic_GNU "") # Default 65536
+  set(Fortran_STACKARRAYLIMIT65_Generic_Intel "-heap-arrays 65")
+  set(Fortran_STACKARRAYLIMIT65_Windows_Intel "/heap-arrays:65")
 
   set(Fortran_STDF90_Generic_GNU "")
   set(Fortran_STDF90_Generic_Intel "-stand f90")
@@ -1235,13 +1243,17 @@ function(cmi_find_mpi)
 
   # Intel MPI
   if(NOT I_MPI_ROOT)
-    set(I_MPI_ROOT "$ENV{I_MPI_ROOT}" CACHE PATH "")
+    if(EXISTS "$ENV{I_MPI_ROOT}")
+      set(I_MPI_ROOT "$ENV{I_MPI_ROOT}" CACHE PATH "")
+    elseif(EXISTS "$ENV{I_MPI_ONEAPI_ROOT}")
+      set(I_MPI_ROOT "$ENV{I_MPI_ONEAPI_ROOT}" CACHE PATH "")
+    endif()
   endif()
   if(I_MPI_ROOT AND CYGWIN AND NOT DEFINED CMI_MPI_TYPE)
     message(STATUS "MPI: I_MPI_ROOT is set, but Intel MPI is not compatible with Cygwin!")
   endif()
 
-  if(I_MPI_ROOT AND NOT CYGWIN)
+  if(I_MPI_ROOT AND NOT CYGWIN AND EXISTS "${I_MPI_ROOT}")
     set(MPI_TYPE "Intel")
     if(NOT CMI_MPI_TYPE STREQUAL MPI_TYPE)
       message(STATUS "MPI: Using Intel MPI")
@@ -1260,16 +1272,27 @@ function(cmi_find_mpi)
 
     set(MPI_ROOT "${I_MPI_ROOT}")
 
+    if(EXISTS "${I_MPI_ROOT}/intel64")
+      set(I_MPI_BASE "${I_MPI_ROOT}/intel64")
+    else()
+      set(I_MPI_BASE "${I_MPI_ROOT}")
+    endif()
+
     # Handle MPI_EXEC
-    set(MPI_EXEC "${I_MPI_ROOT}/intel64/bin/mpiexec")
+    set(MPI_EXEC "${I_MPI_BASE}/bin/mpiexec")
 
     # Handle MPI_<comp>_LIB
     foreach(COMPONENT IN LISTS _COMPONENTS)
-      set(I_MPI_LIB_DIR_ "${I_MPI_ROOT}/intel64/lib")
+      set(I_MPI_LIB_DIR_ "${I_MPI_BASE}/lib")
+      set(I_MPI_FABRIC_DIR "${I_MPI_BASE}/libfabric")
 
       # all require the C library
       find_library(I_MPI_C_LIB_ NAMES impi mpi PATHS "${I_MPI_LIB_DIR_}/release" NO_DEFAULT_PATH)
       set(MPI_${COMPONENT}_LIB ${I_MPI_C_LIB_})
+      find_library(I_MPI_FABRIC_LIB_ NAMES fabric PATHS "${I_MPI_FABRIC_DIR}/lib" NO_DEFAULT_PATH)
+      if(I_MPI_FABRIC_LIB_)
+        list(APPEND I_MPI_C_LIB_ ${I_MPI_FABRIC_LIB_})
+      endif()
 
       if(${COMPONENT} STREQUAL "MPICXX")
         find_library(I_MPI_CXX_LIB_ NAMES impicxx mpicxx PATHS "${I_MPI_LIB_DIR_}" NO_DEFAULT_PATH)
@@ -1292,7 +1315,7 @@ function(cmi_find_mpi)
     unset(I_MPI_LIB_DIR_)
 
     # Handle MPI_INCLUDE
-    set(MPI_INCLUDE "${I_MPI_ROOT}/intel64/include")
+    set(MPI_INCLUDE "${I_MPI_BASE}/include")
     if(NOT EXISTS "${MPI_INCLUDE}")
       message(WARNING "MPI: Missing include directory - ${MPI_INCLUDE}")
     else()
