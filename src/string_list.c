@@ -159,4 +159,5 @@ int string_trim(const char* string, char** trimmed_string) {
     }
     memcpy(*trimmed_string, &string[start], sizeof(char) * trimmed_string_length);
     (*trimmed_string)[trimmed_string_length] = '\0';
+    return 0;
 }
