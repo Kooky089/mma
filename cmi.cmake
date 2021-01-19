@@ -1,6 +1,6 @@
 # BSD 2-Clause License
 #
-# Copyright (c) 2019-2020, Volker Jacht
+# Copyright (c) 2019-2021, Volker Jacht
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 
 cmake_minimum_required(VERSION 3.8)
 
-set(CMI_TAG "a8ad577e44f7976302e8515508595e3a998ec1bb")
+set(CMI_TAG "8bdd97b1e08b2beb4b128785b17106a7596f595d")
 
 get_property(CMI_LOADER_FILE GLOBAL PROPERTY CMI_LOADER_FILE)
 # First include
@@ -135,9 +135,10 @@ function(cmi_minimum_required)
 endfunction()
 
 function(cmi_file)
-  cmake_parse_arguments(_FILE "" "" "SIZE" ${ARGN})
-  list(LENGTH _FILE_SIZE _FILE_LENGTH)
-  if (_FILE_LENGTH STREQUAL 2)
+  cmake_parse_arguments(_FILE "" "" "SIZE;DOWNLOAD" ${ARGN})
+  list(LENGTH _FILE_SIZE _FILE_SIZE_LENGTH)
+  list(LENGTH _FILE_DOWNLOAD _FILE_DOWNLOAD_LENGTH)
+  if (_FILE_SIZE_LENGTH STREQUAL 2)
     list(GET _FILE_SIZE 0 INPUT_FILE)
     list(GET _FILE_SIZE 1 FILE_SIZE)
     if(${CMAKE_VERSION} VERSION_LESS "3.14.0")
@@ -151,6 +152,25 @@ function(cmi_file)
       file(SIZE "${INPUT_FILE}" FILE_SIZE_)
     endif()
     set(${FILE_SIZE} ${FILE_SIZE_} PARENT_SCOPE)
+  elseif(_FILE_DOWNLOAD_LENGTH STREQUAL 2)
+    list(GET _FILE_DOWNLOAD 0 DOWNLOAD_URL)
+    list(GET _FILE_DOWNLOAD 1 DOWNLOAD_DESTINATION)
+    set(DOWNLOAD_DESTINATION_TMP "${DOWNLOAD_DESTINATION}.tmp")
+    if(EXISTS "${DOWNLOAD_DESTINATION_TMP}")
+      message(STATUS "Removing ${DOWNLOAD_DESTINATION_TMP}")
+      file(REMOVE_RECURSE "${DOWNLOAD_DESTINATION_TMP}")
+    endif()
+    message(STATUS "Downloading ${DOWNLOAD_URL}")
+    file(DOWNLOAD "${DOWNLOAD_URL}" "${DOWNLOAD_DESTINATION_TMP}" SHOW_PROGRESS)
+    cmi_file(SIZE "${DOWNLOAD_DESTINATION_TMP}" DOWNLOAD_FILESIZE)
+    if(DOWNLOAD_FILESIZE STREQUAL 0)
+      message(WARNING "Can not download ${DOWNLOAD_DESTINATION}")
+      file(REMOVE "${DOWNLOAD_DESTINATION_TMP}")
+    else()
+      file(RENAME "${DOWNLOAD_DESTINATION}.tmp" "${DOWNLOAD_DESTINATION}")
+    endif()
+  else()
+    message(WARNING "CMI_FILE() no matching function for parameters ${ARGN}")
   endif()
 endfunction()
 
@@ -317,13 +337,7 @@ function(cmi_add_archive_ PROJECT_NAME_ PROJECT_URL_)
 
   if(NOT EXISTS "${${PROJECT_NAME_UPPER_}_DIR}")
     if(NOT EXISTS "${${PROJECT_NAME_UPPER_}_ARCHIVE_PATH}")
-      message(STATUS "Downloading ${PROJECT_NAME_UPPER_} ${PROJECT_URL_}")
-      file(DOWNLOAD "${PROJECT_URL_}" "${${PROJECT_NAME_UPPER_}_ARCHIVE_PATH}" SHOW_PROGRESS)
-      cmi_file(SIZE "${${PROJECT_NAME_UPPER_}_ARCHIVE_PATH}" ARCHIVE_FILESIZE_)
-      if(ARCHIVE_FILESIZE_ STREQUAL 0)
-        file(REMOVE "${${PROJECT_NAME_UPPER_}_ARCHIVE_PATH}")
-        message(WARNING "Can not download ${PROJECT_URL_}")
-      endif()
+      cmi_file(DOWNLOAD "${PROJECT_URL_}" "${${PROJECT_NAME_UPPER_}_ARCHIVE_PATH}")
     endif()
     message(STATUS "Extracting ${PROJECT_NAME_UPPER_} ${${PROJECT_NAME_UPPER_}_ARCHIVE_PATH} to ${${PROJECT_NAME_UPPER_}_DIR}")
     execute_process(
@@ -1139,9 +1153,10 @@ endmacro()
 ######################################
 # MPI
 # Prequisites:
-# If I_MPI_ROOT environment variable is set correctly, Intel MPI is used as library.
+# If I_MPI_ROOT or I_MPI_ONEAPI_ROOT environment variable is set correctly,
+# Intel MPI is used as library.
 # Otherwise, passing a working MPI compiler wrapper is required.
-# E.g. FC=mpif90 CC=mpicc CXX=mpicxx
+# E.g. FC=mpifc CC=mpicc CXX=mpicxx
 #
 # Example usage:
 # cmi_find_mpi(REQUIRED COMPONENTS CXX)
@@ -1288,11 +1303,11 @@ function(cmi_find_mpi)
 
       # all require the C library
       find_library(I_MPI_C_LIB_ NAMES impi mpi PATHS "${I_MPI_LIB_DIR_}/release" NO_DEFAULT_PATH)
-      set(MPI_${COMPONENT}_LIB ${I_MPI_C_LIB_})
       find_library(I_MPI_FABRIC_LIB_ NAMES fabric PATHS "${I_MPI_FABRIC_DIR}/lib" NO_DEFAULT_PATH)
       if(I_MPI_FABRIC_LIB_)
         list(APPEND I_MPI_C_LIB_ ${I_MPI_FABRIC_LIB_})
       endif()
+      set(MPI_${COMPONENT}_LIB ${I_MPI_C_LIB_})
 
       if(${COMPONENT} STREQUAL "MPICXX")
         find_library(I_MPI_CXX_LIB_ NAMES impicxx mpicxx PATHS "${I_MPI_LIB_DIR_}" NO_DEFAULT_PATH)
@@ -1313,6 +1328,10 @@ function(cmi_find_mpi)
       endif()
     endforeach()
     unset(I_MPI_LIB_DIR_)
+    unset(I_MPI_F_LIB_)
+    unset(I_MPI_C_LIB_)
+    unset(I_MPI_CXX_LIB_)
+    unset(I_MPI_FABRIC_LIB_)
 
     # Handle MPI_INCLUDE
     set(MPI_INCLUDE "${I_MPI_BASE}/include")
