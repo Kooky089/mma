@@ -28,7 +28,7 @@
 
 cmake_minimum_required(VERSION 3.8)
 
-set(CMI_TAG "8bdd97b1e08b2beb4b128785b17106a7596f595d")
+set(CMI_TAG "88db46577abfbf624de26c300eb04b741d036493")
 
 get_property(CMI_LOADER_FILE GLOBAL PROPERTY CMI_LOADER_FILE)
 # First include
@@ -570,7 +570,7 @@ function(cmi_Fortran_append var name)
   set(Fortran_DEBUGINFO_Generic_Intel "-g")
   set(Fortran_DEBUGINFO_Windows_Intel "/debug:full")
 
-  set(Fortran_O0_Generic_GNU "-Og")
+  set(Fortran_O0_Generic_GNU "-O0")
   set(Fortran_O0_Generic_Intel "-O0")
   set(Fortran_O0_Windows_Intel "/Od")
 
@@ -975,7 +975,6 @@ macro(cmi_set_build_environment)
     if(DEFINED CMAKE_Fortran_FLAGS_RELEASE)
       cmi_fortran_append(CMAKE_Fortran_FLAGS_RELEASE O2)
     endif()
-    #cmi_fortran_append(CMAKE_Fortran_FLAGS TRACEBACK)
   endif()
 endmacro()
 
@@ -1327,11 +1326,7 @@ function(cmi_find_mpi)
         message(WARNING "MPI: Missing developer libraries (${COMPONENT}). MPI SDK installed correctly?")
       endif()
     endforeach()
-    unset(I_MPI_LIB_DIR_)
-    unset(I_MPI_F_LIB_)
-    unset(I_MPI_C_LIB_)
-    unset(I_MPI_CXX_LIB_)
-    unset(I_MPI_FABRIC_LIB_)
+    mark_as_advanced(I_MPI_LIB_DIR_ I_MPI_F_LIB_ I_MPI_C_LIB_ I_MPI_CXX_LIB_ I_MPI_FABRIC_LIB_)
 
     # Handle MPI_INCLUDE
     set(MPI_INCLUDE "${I_MPI_BASE}/include")
