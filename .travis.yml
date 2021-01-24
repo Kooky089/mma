@@ -4,7 +4,7 @@ before_install:
 install:
   - mkdir _build
   - cd _build
-  - CC=mpicc FC=mpif90 cmake ../
+  - CC=mpicc FC=mpif90 cmake -DBUILD_TESTING=1 ..
   - make
 script:
   - make test
