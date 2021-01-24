@@ -234,7 +234,7 @@ int mma_initialize() {
     int min_rank;
     int exe_id;
     int already_initialized_mpi;
-    int mma_local_version = MMA_API_VERSION;
+    int mma_local_version = MMA_PROTOCOL_VERSION;
     int mma_global_version = 0;
 
     MPI_Initialized(&already_initialized_mpi);
