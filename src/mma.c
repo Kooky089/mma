@@ -234,6 +234,8 @@ int mma_initialize() {
     int min_rank;
     int exe_id;
     int already_initialized_mpi;
+    int mma_local_version = MMA_API_VERSION;
+    int mma_global_version = 0;
 
     MPI_Initialized(&already_initialized_mpi);
 
@@ -247,151 +249,159 @@ int mma_initialize() {
     } else {
         initialized = 2;
     }
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-    mma_comm_register("world");
+    /* Get the minumum API version of all MMA processes */
+    MPI_Allreduce(&mma_local_version, &mma_global_version, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+    if (mma_global_version == 1) {
+        MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+        MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-    mma_get_id_(&exe_id);
+        mma_comm_register("world");
 
-    /* number of local registered comms */
-    comm_size = string_list_size(comm_name_list);
-    comm_array_size = comm_size;
-    comm_array = calloc(comm_array_size, sizeof(struct mma_comm*));
+        mma_get_id_(&exe_id);
 
-    if (comm_array == NULL) {
-        return 2;
-    }
-    for (i = 0; i < comm_array_size; ++i) {
-        comm_array[i] = calloc(1, sizeof(**comm_array));
-        if (comm_array[i] == NULL) {
-            return 3;
+        /* number of local registered comms */
+        comm_size = string_list_size(comm_name_list);
+        comm_array_size = comm_size;
+        comm_array = calloc(comm_array_size, sizeof(struct mma_comm*));
+
+        if (comm_array == NULL) {
+            return 2;
         }
-    }
-    /* Get total number of communicator names (will have many duplicates)*/
-    MPI_Reduce(&comm_size, &global_comm_size, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD);
-
-    if (!world_rank) {
-        /*
-        Rank 0 collects a list of all communicator names
-        */
-
-        string_list_create(&global_comm_name_list);
-        string_list_add_all(global_comm_name_list, comm_name_list);
-
-        for (i = 0; i < global_comm_size - comm_size; ++i) {
-            MPI_Probe(MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
-            MPI_Get_count(&status, MPI_CHAR, &msg_size);
-            string = malloc(sizeof(char) * msg_size);
-            if (!string) {
-                return 4;
+        for (i = 0; i < comm_array_size; ++i) {
+            comm_array[i] = calloc(1, sizeof(**comm_array));
+            if (comm_array[i] == NULL) {
+                return 3;
             }
-            MPI_Recv(string, msg_size, MPI_CHAR, status.MPI_SOURCE, 0, MPI_COMM_WORLD,
-                     MPI_STATUS_IGNORE);
-            string_list_add(global_comm_name_list, string);
-            free(string);
         }
-        /* number of global comms */
-        global_comm_size = string_list_size(global_comm_name_list);
+        /* Get total number of communicator names (will have many duplicates)*/
+        MPI_Reduce(&comm_size, &global_comm_size, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD);
 
-    } else {
-        /* Send communicator names to root node */
-        for (i = 0; i < comm_size; ++i) {
-            string = string_list_get(comm_name_list, i);
-            MPI_Send(string, (int)strlen(string) + 1, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
-        }
-    }
-
-    /*
-    ! Root sends total number communicator names to all processes
-    ! => equals number of MPI_COMM_SPLITs on group_list(0)->comm
-    */
-    MPI_Bcast(&global_comm_size, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
-
-    for (i = 0; i < global_comm_size; ++i) {
         if (!world_rank) {
-            string = string_list_get(global_comm_name_list, i);
-            msg_size = (int)strlen(string) + 1;
-            MPI_Bcast(&msg_size, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
+            /*
+            Rank 0 collects a list of all communicator names
+            */
+
+            string_list_create(&global_comm_name_list);
+            string_list_add_all(global_comm_name_list, comm_name_list);
+
+            for (i = 0; i < global_comm_size - comm_size; ++i) {
+                MPI_Probe(MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
+                MPI_Get_count(&status, MPI_CHAR, &msg_size);
+                string = malloc(sizeof(char) * msg_size);
+                if (!string) {
+                    return 4;
+                }
+                MPI_Recv(string, msg_size, MPI_CHAR, status.MPI_SOURCE, 0, MPI_COMM_WORLD,
+                         MPI_STATUS_IGNORE);
+                string_list_add(global_comm_name_list, string);
+                free(string);
+            }
+            /* number of global comms */
+            global_comm_size = string_list_size(global_comm_name_list);
+
         } else {
-            MPI_Bcast(&msg_size, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
-            string = malloc(sizeof(char) * msg_size);
-            if (!string) {
-                return 5;
+            /* Send communicator names to root node */
+            for (i = 0; i < comm_size; ++i) {
+                string = string_list_get(comm_name_list, i);
+                MPI_Send(string, (int)strlen(string) + 1, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
             }
         }
-        MPI_Bcast(string, msg_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 
-        /* check if process wants to join comm */
-        j = string_list_index_of(comm_name_list, string);
+        /*
+        ! Root sends total number communicator names to all processes
+        ! => equals number of MPI_COMM_SPLITs on group_list(0)->comm
+        */
+        MPI_Bcast(&global_comm_size, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
 
-        if (j >= 0) {
-            /* Local process joins the current communicator */
-            MPI_Comm_split(MPI_COMM_WORLD, 0, exe_id * world_size + world_rank,
-                           &comm_array[j]->comm);
-            MPI_Comm_rank(comm_array[j]->comm, &comm_array[j]->rank);
-            MPI_Comm_size(comm_array[j]->comm, &comm_array[j]->size);
-
-            /* Split current group communicator into local and remote
-             * communicator be exe_id */
-            MPI_Comm_split(comm_array[j]->comm, exe_id, comm_array[j]->rank,
-                           &comm_array[j]->sub_comm);
-            MPI_Comm_rank(comm_array[j]->sub_comm, &comm_array[j]->sub_rank);
-            MPI_Comm_size(comm_array[j]->sub_comm, &comm_array[j]->sub_size);
-
-            MPI_Comm_set_name(comm_array[j]->comm, string);
-            MPI_Comm_set_name(comm_array[j]->sub_comm, string);
-
-            comm_array[j]->name = malloc(sizeof(char) * (strlen(string) + 1));
-            memcpy(comm_array[j]->name, string, sizeof(char) * (strlen(string) + 1));
-
-            /* Count the number of different work_ids in the current group_comm
-             */
-            if (!comm_array[j]->sub_rank) {
-                local_components = 1;
+        for (i = 0; i < global_comm_size; ++i) {
+            if (!world_rank) {
+                string = string_list_get(global_comm_name_list, i);
+                msg_size = (int)strlen(string) + 1;
+                MPI_Bcast(&msg_size, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
             } else {
-                local_components = 0;
+                MPI_Bcast(&msg_size, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
+                string = malloc(sizeof(char) * msg_size);
+                if (!string) {
+                    return 5;
+                }
             }
-            MPI_Allreduce(&local_components, &global_components, 1, MPI_INTEGER, MPI_SUM,
-                          comm_array[j]->comm);
+            MPI_Bcast(string, msg_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 
-            /* If current communicator only consists of local ranks, delete
-             * group communicator. => User may still use self_comm */
-            if (global_components == 1) {
-                comm_array[j]->my_rank0 = 0;
-                comm_array[j]->other_rank0 = MPI_PROC_NULL;
+            /* check if process wants to join comm */
+            j = string_list_index_of(comm_name_list, string);
 
-                /* group_comm consists of two workgroups */
-            } else if (global_components == 2) {
-                MPI_Allreduce(&exe_id, &min_rank, 1, MPI_INTEGER, MPI_MIN, comm_array[j]->comm);
-                if (exe_id == min_rank) {
-                    comm_array[j]->my_rank0 = 0;
-                    comm_array[j]->other_rank0 = comm_array[j]->sub_size;
+            if (j >= 0) {
+                /* Local process joins the current communicator */
+                MPI_Comm_split(MPI_COMM_WORLD, 0, exe_id * world_size + world_rank,
+                               &comm_array[j]->comm);
+                MPI_Comm_rank(comm_array[j]->comm, &comm_array[j]->rank);
+                MPI_Comm_size(comm_array[j]->comm, &comm_array[j]->size);
+
+                /* Split current group communicator into local and remote
+                 * communicator be exe_id */
+                MPI_Comm_split(comm_array[j]->comm, exe_id, comm_array[j]->rank,
+                               &comm_array[j]->sub_comm);
+                MPI_Comm_rank(comm_array[j]->sub_comm, &comm_array[j]->sub_rank);
+                MPI_Comm_size(comm_array[j]->sub_comm, &comm_array[j]->sub_size);
+
+                MPI_Comm_set_name(comm_array[j]->comm, string);
+                MPI_Comm_set_name(comm_array[j]->sub_comm, string);
+
+                comm_array[j]->name = malloc(sizeof(char) * (strlen(string) + 1));
+                memcpy(comm_array[j]->name, string, sizeof(char) * (strlen(string) + 1));
+
+                /* Count the number of different work_ids in the current group_comm
+                 */
+                if (!comm_array[j]->sub_rank) {
+                    local_components = 1;
                 } else {
-                    comm_array[j]->my_rank0 = comm_array[j]->size - comm_array[j]->sub_size;
-                    comm_array[j]->other_rank0 = 0;
+                    local_components = 0;
+                }
+                MPI_Allreduce(&local_components, &global_components, 1, MPI_INTEGER, MPI_SUM,
+                              comm_array[j]->comm);
+
+                /* If current communicator only consists of local ranks, delete
+                 * group communicator. => User may still use self_comm */
+                if (global_components == 1) {
+                    comm_array[j]->my_rank0 = 0;
+                    comm_array[j]->other_rank0 = MPI_PROC_NULL;
+
+                    /* group_comm consists of two workgroups */
+                } else if (global_components == 2) {
+                    MPI_Allreduce(&exe_id, &min_rank, 1, MPI_INTEGER, MPI_MIN, comm_array[j]->comm);
+                    if (exe_id == min_rank) {
+                        comm_array[j]->my_rank0 = 0;
+                        comm_array[j]->other_rank0 = comm_array[j]->sub_size;
+                    } else {
+                        comm_array[j]->my_rank0 = comm_array[j]->size - comm_array[j]->sub_size;
+                        comm_array[j]->other_rank0 = 0;
+                    }
+
+                } else {
+                    /*!TODO?: More than two exeIds/workgroups per group communicator.
+                     * => otherRank0 wont be available*/
+                    comm_array[j]->my_rank0 = comm_array[j]->rank - comm_array[j]->sub_rank;
+                    comm_array[j]->other_rank0 = MPI_PROC_NULL;
                 }
 
+                comm_array[j]->comm_f = MPI_Comm_c2f(comm_array[j]->comm);
+                comm_array[j]->sub_comm_f = MPI_Comm_c2f(comm_array[j]->sub_comm);
+
             } else {
-                /*!TODO?: More than two exeIds/workgroups per group communicator.
-                 * => otherRank0 wont be available*/
-                comm_array[j]->my_rank0 = comm_array[j]->rank - comm_array[j]->sub_rank;
-                comm_array[j]->other_rank0 = MPI_PROC_NULL;
+                MPI_Comm_split(MPI_COMM_WORLD, 1, world_rank, &tmp_comm);
+                MPI_Comm_free(&tmp_comm);
             }
-
-            comm_array[j]->comm_f = MPI_Comm_c2f(comm_array[j]->comm);
-            comm_array[j]->sub_comm_f = MPI_Comm_c2f(comm_array[j]->sub_comm);
-
-        } else {
-            MPI_Comm_split(MPI_COMM_WORLD, 1, world_rank, &tmp_comm);
-            MPI_Comm_free(&tmp_comm);
+            if (world_rank) {
+                free(string);
+            }
         }
-        if (world_rank) {
-            free(string);
+        if (!world_rank) {
+            string_list_destroy(&global_comm_name_list);
         }
-    }
-    if (!world_rank) {
-        string_list_destroy(&global_comm_name_list);
+    } else {
+        // Unsupported API version
+        return 6;
     }
     return 0;
 }
