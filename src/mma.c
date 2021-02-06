@@ -361,6 +361,9 @@ int mma_initialize() {
                 MPI_Allreduce(&local_components, &global_components, 1, MPI_INTEGER, MPI_SUM,
                               comm_array[j]->comm);
 
+                /* Missing rank 0 in sub_comm? */
+                assert(global_components > 0);
+
                 /* If current communicator only consists of local ranks, delete
                  * group communicator. => User may still use self_comm */
                 if (global_components == 1) {
