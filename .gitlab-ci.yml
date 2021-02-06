@@ -17,6 +17,16 @@ linux:
   script:
     - mkdir -p _build
     - cd _build
-    - CC=mpicc FC=mpif90 cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=1 ..
+    - CC=mpicc FC=mpif90 cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=1 -DCMAKE_C_FLAGS=--coverage ..
     - make
     - make test
+    - mkdir -p ../coverage
+    - gcovr -r .. src
+    - gcovr -r .. src --xml=../coverage.xml --html-details=../coverage/coverage.html
+  coverage: '/^TOTAL.*\s+(\d+\%)$/'
+  artifacts:
+    reports:
+      cobertura: coverage.xml
+    expose_as: 'Coverage Report'
+    paths:
+      - coverage/
