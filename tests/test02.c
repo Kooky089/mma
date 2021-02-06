@@ -29,6 +29,10 @@ int main(int argc, char* argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
+    // test print before initialization
+    error = mma_print_collective(MPI_COMM_WORLD);
+    assert(error == 0);
+
     if (world_rank == 0) {
         error = mma_comm_register("a");
         assert(error == 0);
@@ -60,9 +64,14 @@ int main(int argc, char* argv[]) {
     // ask for comm before initialized
     error = mma_comm_get("a", &test_error_comm);
     assert(error != 0);
+
     // ask for comm that doesnt exist
     error = mma_comm_get("ab", &test_error_comm);
     assert(error != 0);
+
+    // print registered comms
+    error = mma_print_collective(MPI_COMM_WORLD);
+    assert(error == 0);
 
     error = mma_initialize();
     assert(error == 0);
@@ -228,8 +237,16 @@ int main(int argc, char* argv[]) {
         assert(d->other_rank0 == 0);
         assert(!strcmp(d->name, "d"));
     }
+
+    // print detailed communicator info
     error = mma_print_collective(MPI_COMM_WORLD);
     assert(error == 0);
+
+    // second initialize should do nothing
+    error = mma_initialize();
+    assert(error == 0);
+
+
     error = mma_finalize();
     assert(error == 0);
     MPI_Finalize();
