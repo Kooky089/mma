@@ -6,10 +6,17 @@ linux:
   tags:
     - docker
     - linux
-  image: jedbrown/mpich
+  image: fedora:33
+  before_script:
+    - dnf install -y gcc gcc-gfortran gcovr openmpi-devel cmake
+    - export PATH=/usr/lib64/openmpi/bin/:$PATH
+    - export OMPI_ALLOW_RUN_AS_ROOT=1
+    - export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+    - export MMA_MPI_RUN_FLAG="-oversubscribe"
+
   script:
-    - mkdir -p _build/debug
-    - cd _build/debug
-    - CC=mpicc FC=mpif90 cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=1 ../..
-    - cmake --build .
-    - ctest
+    - mkdir -p _build
+    - cd _build
+    - CC=mpicc FC=mpif90 cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=1 ..
+    - make
+    - make test
