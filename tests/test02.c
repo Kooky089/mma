@@ -34,7 +34,8 @@ int main(int argc, char* argv[]) {
     assert(error == 0);
 
     if (world_rank == 0) {
-        error = mma_comm_register("a");
+        /* check trimming */
+        error = mma_comm_register("  a  ");
         assert(error == 0);
         error = mma_comm_register("b");
         assert(error == 0);
@@ -240,6 +241,16 @@ int main(int argc, char* argv[]) {
 
     // print detailed communicator info
     error = mma_print_collective(MPI_COMM_WORLD);
+    assert(error == 0);
+
+    // check trimming
+    error = mma_comm_get(" world", &world);
+    assert(error == 0);
+
+    error = mma_comm_get("world ", &world);
+    assert(error == 0);
+
+    error = mma_comm_get(" world", &world);
     assert(error == 0);
 
     // second initialize should do nothing
