@@ -61,6 +61,8 @@ int main(int argc, char* argv[]) {
         assert(error == 0);
         error = mma_comm_register("d");
         assert(error == 0);
+        error = mma_set_name("test01b");
+        assert(error == 0);
     }
 
     struct mma_comm* test_error_comm;
@@ -265,6 +267,10 @@ int main(int argc, char* argv[]) {
 
     error = mma_finalize();
     assert(error == 0);
+
+    error = mma_finalize();
+    assert(error == 0);
+
     MPI_Finalize();
     return 0;
 }
