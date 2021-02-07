@@ -23,16 +23,6 @@ static char* _name = NULL;
 static int mma_get_id_(int* id);
 static int mma_get_name_(const char** name);
 
-static int mma_reset_() {
-    world_rank = MPI_PROC_NULL;
-    world_size = 0;
-    comm_name_list = NULL;
-    comm_array = NULL;
-    comm_array_size = 0;
-    initialized = 0;
-    return 0;
-}
-
 int mma_set_name(const char* name) {
     assert(name);
     free(_name);
@@ -122,15 +112,26 @@ int mma_finalize() {
     if (comm_name_list) {
         string_list_destroy(&comm_name_list);
     }
-    if (comm_array_size) {
+    if (comm_array) {
         for (i = 0; i < comm_array_size; ++i) {
-            free(comm_array[i]->name);
-            free(comm_array[i]);
+            if(comm_array[i]) {
+                if(comm_array[i]->name) {
+                    free(comm_array[i]->name);
+                    comm_array[i]->name = NULL;
+                }
+                free(comm_array[i]);
+                comm_array[i] = NULL;
+            }
         }
         free(comm_array);
+        comm_array = NULL;
     }
+    comm_array_size = 0;
     free(_name);
-    mma_reset_();
+    _name = NULL;
+    world_rank = MPI_PROC_NULL;
+    world_size = 0;
+    initialized = 0;
     return 0;
 }
 
