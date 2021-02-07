@@ -6,10 +6,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-void string_list_create(struct string_list** list) {
+int string_list_create(struct string_list** list) {
+    assert(list);
+    assert(!*list);
     *list = calloc(1, sizeof(struct string_list));
+    /* LCOV_EXCL_START */
+    if (!*list) {
+        return 1;
+    }
+    /* LCOV_EXCL_STOP */
     (*list)->first = NULL;
     (*list)->size = 0;
+    return 0;
 }
 
 void string_list_destroy(struct string_list** list) {

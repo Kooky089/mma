@@ -133,7 +133,7 @@ int mma_finalize() {
 }
 
 static int mma_get_id_(int* exe_id) {
-    struct string_list* exe_name_list;
+    struct string_list* exe_name_list = NULL;
     MPI_Status status;
     int i;
     int msg_size;
@@ -361,6 +361,11 @@ int mma_initialize() {
                 MPI_Comm_set_name(comm_array[j]->sub_comm, string);
 
                 comm_array[j]->name = malloc(sizeof(char) * (strlen(string) + 1));
+                /* LCOV_EXCL_START */
+                if (!comm_array[j]->name) {
+                    return 1;
+                }
+                /* LCOV_EXCL_STOP */
                 memcpy(comm_array[j]->name, string, sizeof(char) * (strlen(string) + 1));
 
                 /* Count the number of different work_ids in the current group_comm

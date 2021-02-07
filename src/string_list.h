@@ -11,7 +11,7 @@ struct string_list {
     int size;
 };
 
-void string_list_create(struct string_list**);
+int string_list_create(struct string_list**);
 void string_list_destroy(struct string_list**);
 int string_list_add(struct string_list*, const char*);
 int string_list_add_all(struct string_list*, struct string_list*);
