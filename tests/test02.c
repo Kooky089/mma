@@ -41,6 +41,8 @@ int main(int argc, char* argv[]) {
         assert(error == 0);
         error = mma_comm_register("a");
         assert(error != 0);
+        error = mma_comm_register("");
+        assert(error == 0);
     }
     if (world_rank == 1 || world_rank == 2) {
         error = mma_comm_register("a");
