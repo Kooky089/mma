@@ -154,9 +154,11 @@ static int mma_get_id_(int* exe_id) {
             MPI_Probe(i, 0, MPI_COMM_WORLD, &status);
             MPI_Get_count(&status, MPI_CHAR, &msg_size);
             string = calloc(msg_size, sizeof(char));
+            /* LCOV_EXCL_START */
             if (string == NULL) {
                 return 1;
             }
+            /* LCOV_EXCL_STOP */
             MPI_Recv(string, msg_size, MPI_CHAR, status.MPI_SOURCE, 0, MPI_COMM_WORLD,
                      MPI_STATUS_IGNORE);
             string_list_add(exe_name_list, string);
@@ -190,9 +192,11 @@ static int mma_get_id_(int* exe_id) {
         for (i = 0; i < list_size; ++i) {
             MPI_Bcast(&msg_size, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
             string = malloc(sizeof(char) * msg_size);
+            /* LCOV_EXCL_START */
             if (!string) {
                 return 1;
             }
+            /* LCOV_EXCL_STOP */
             MPI_Bcast(string, msg_size, MPI_CHAR, 0, MPI_COMM_WORLD);
             if (!strcmp(string, exe_name)) {
                 *exe_id = i;
@@ -250,7 +254,7 @@ int mma_initialize() {
         initialized = 2;
     }
 
-    /* Get the minumum API version of all MMA processes */
+    /* Get the minimum API version of all MMA processes */
     MPI_Allreduce(&mma_local_version, &mma_global_version, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
     if (mma_global_version == 1) {
         MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
@@ -265,14 +269,18 @@ int mma_initialize() {
         comm_array_size = comm_size;
         comm_array = calloc(comm_array_size, sizeof(struct mma_comm*));
 
+        /* LCOV_EXCL_START */
         if (comm_array == NULL) {
             return 2;
         }
+        /* LCOV_EXCL_STOP */
         for (i = 0; i < comm_array_size; ++i) {
             comm_array[i] = calloc(1, sizeof(**comm_array));
+            /* LCOV_EXCL_START */
             if (comm_array[i] == NULL) {
                 return 3;
             }
+            /* LCOV_EXCL_STOP */
         }
         /* Get total number of communicator names (will have many duplicates)*/
         MPI_Reduce(&comm_size, &global_comm_size, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -289,9 +297,11 @@ int mma_initialize() {
                 MPI_Probe(MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
                 MPI_Get_count(&status, MPI_CHAR, &msg_size);
                 string = malloc(sizeof(char) * msg_size);
+                /* LCOV_EXCL_START */
                 if (!string) {
                     return 4;
                 }
+                /* LCOV_EXCL_STOP */
                 MPI_Recv(string, msg_size, MPI_CHAR, status.MPI_SOURCE, 0, MPI_COMM_WORLD,
                          MPI_STATUS_IGNORE);
                 string_list_add(global_comm_name_list, string);
@@ -322,9 +332,11 @@ int mma_initialize() {
             } else {
                 MPI_Bcast(&msg_size, 1, MPI_INTEGER, 0, MPI_COMM_WORLD);
                 string = malloc(sizeof(char) * msg_size);
+                /* LCOV_EXCL_START */
                 if (!string) {
                     return 5;
                 }
+                /* LCOV_EXCL_STOP */
             }
             MPI_Bcast(string, msg_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 

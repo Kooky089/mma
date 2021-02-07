@@ -33,14 +33,20 @@ int string_list_add(struct string_list* list, const char* string) {
     int i;
 
     next = malloc(sizeof(struct string_node));
+    /* LCOV_EXCL_START */
     if (!next) {
         return 1;
     }
+    /* LCOV_EXCL_STOP */
+
     next->value = malloc(sizeof(char) * (strlen(string) + 1));
+    /* LCOV_EXCL_START */
     if (!next->value) {
         free(next);
         return 1;
     }
+    /* LCOV_EXCL_STOP */
+
     memcpy(next->value, string, sizeof(char) * (strlen(string) + 1));
 
     next->next = NULL;
@@ -154,9 +160,12 @@ int string_trim(const char* string, char** trimmed_string) {
     /* allocate and copy trimmed string */
     trimmed_string_length = end - start;
     *trimmed_string = malloc(sizeof(char) * (trimmed_string_length + 1));
+    /* LCOV_EXCL_START */
     if (!*trimmed_string) {
         return 1;
     }
+    /* LCOV_EXCL_STOP */
+
     memcpy(*trimmed_string, &string[start], sizeof(char) * trimmed_string_length);
     (*trimmed_string)[trimmed_string_length] = '\0';
     return 0;
