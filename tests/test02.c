@@ -246,6 +246,9 @@ int main(int argc, char* argv[]) {
     error = mma_initialize();
     assert(error == 0);
 
+    // ask for comm that doesnt exist after initialization
+    error = mma_comm_get("ab", &test_error_comm);
+    assert(error != 0);
 
     error = mma_finalize();
     assert(error == 0);
