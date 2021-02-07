@@ -51,13 +51,13 @@ int mma_comm_get(const char* comm_name, struct mma_comm** comm) {
         if (index == -1) {
             /* communicator name does not exist */
             *comm = NULL;
-            return 1;
+            return 2;
         }
         *comm = comm_array[index];
         return 0;
     }
     *comm = NULL;
-    return 2;
+    return 3;
 }
 
 int mma_comm_register(const char* comm_name) {
@@ -157,7 +157,8 @@ static int mma_get_id_(int* exe_id) {
             MPI_Get_count(&status, MPI_CHAR, &msg_size);
             string = calloc(msg_size, sizeof(char));
             /* LCOV_EXCL_START */
-            if (string == NULL) {
+            if (!string) {
+                string_list_destroy(&exe_name_list);
                 return 1;
             }
             /* LCOV_EXCL_STOP */
@@ -274,15 +275,15 @@ int mma_initialize() {
         comm_array = calloc(comm_array_size, sizeof(struct mma_comm*));
 
         /* LCOV_EXCL_START */
-        if (comm_array == NULL) {
-            return 2;
+        if (!comm_array) {
+            return 1;
         }
         /* LCOV_EXCL_STOP */
         for (i = 0; i < comm_array_size; ++i) {
             comm_array[i] = calloc(1, sizeof(**comm_array));
             /* LCOV_EXCL_START */
-            if (comm_array[i] == NULL) {
-                return 3;
+            if (!comm_array[i]) {
+                return 1;
             }
             /* LCOV_EXCL_STOP */
         }
@@ -303,7 +304,7 @@ int mma_initialize() {
                 string = malloc(sizeof(char) * msg_size);
                 /* LCOV_EXCL_START */
                 if (!string) {
-                    return 4;
+                    return 1;
                 }
                 /* LCOV_EXCL_STOP */
                 MPI_Recv(string, msg_size, MPI_CHAR, status.MPI_SOURCE, 0, MPI_COMM_WORLD,
@@ -339,7 +340,7 @@ int mma_initialize() {
                 string = malloc(sizeof(char) * msg_size);
                 /* LCOV_EXCL_START */
                 if (!string) {
-                    return 5;
+                    return 1;
                 }
                 /* LCOV_EXCL_STOP */
             }
