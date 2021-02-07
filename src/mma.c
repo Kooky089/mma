@@ -47,6 +47,7 @@ int mma_comm_get(const char* comm_name, struct mma_comm** comm) {
         string_trim(comm_name, &comm_name_);
         int index = string_list_index_of(comm_name_list, comm_name_);
         free(comm_name_);
+        comm_name_ = NULL;
         if (index == -1) {
             /* communicator name does not exist */
             *comm = NULL;
@@ -71,6 +72,7 @@ int mma_comm_register(const char* comm_name) {
     string_trim(comm_name, &comm_name_);
     int result = string_list_add(comm_name_list, comm_name_);
     free(comm_name_);
+    comm_name_ = NULL;
     return result;
 }
 
@@ -163,6 +165,7 @@ static int mma_get_id_(int* exe_id) {
                      MPI_STATUS_IGNORE);
             string_list_add(exe_name_list, string);
             free(string);
+            string = NULL;
         }
 
         /* count unique exe names and tell other processes*/
@@ -202,6 +205,7 @@ static int mma_get_id_(int* exe_id) {
                 *exe_id = i;
             }
             free(string);
+            string = NULL;
         }
     }
     assert(*exe_id != -1);
@@ -306,6 +310,7 @@ int mma_initialize() {
                          MPI_STATUS_IGNORE);
                 string_list_add(global_comm_name_list, string);
                 free(string);
+                string = NULL;
             }
             /* number of global comms */
             global_comm_size = string_list_size(global_comm_name_list);
@@ -414,6 +419,7 @@ int mma_initialize() {
             }
             if (world_rank) {
                 free(string);
+                string = NULL;
             }
         }
         if (!world_rank) {
